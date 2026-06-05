@@ -1,79 +1,53 @@
-'use client';
-import { useState, useEffect } from 'react';
-import BookingModal from '@/components/BookingModal'; // Adjust path if needed
+import Link from 'next/link';
 
-export default function FacilityDetails({ params }) {
-  const [facility, setFacility] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [loading, setLoading] = useState(true);
-
-  // Temporary mock user email until your Auth setup is complete
-  const loggedInUserEmail = "sadiarahmansmrity9@gmail.com"; 
-
-  useEffect(() => {
-    // Fetch individual facility details using the ID from your port 5000 API
-    fetch(`http://localhost:5000/api/facilities`)
-      .then((res) => res.json())
-      .then((data) => {
-        // Find the matching facility by ID from the array list
-        const found = data.find(f => f._id === params.id);
-        setFacility(found);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
-  }, [params.id]);
-
-  if (loading) return <div className="text-white p-10 text-center">Loading details...</div>;
-  if (!facility) return <div className="text-white p-10 text-center">Facility not found.</div>;
+export default function FacilityCard({ facility }) {
+  // Safe default fallback images if the database field is empty
+  const imageSrc = facility?.image || "https://images.unsplash.com/photo-1626224583764-f87db24ac4ea";
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white p-6 md:p-12">
-      <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
-        
-        {/* Left Side: Image */}
-        <div>
+    <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden hover:border-slate-700 transition-all group flex flex-col justify-between h-full shadow-lg">
+      <div>
+        {/* Card Image */}
+        <div className="relative overflow-hidden h-48 border-b border-slate-800">
           <img 
-            src={facility.image} 
-            alt={facility.title} 
-            className="w-full h-96 object-cover rounded-2xl border border-slate-800"
+            src={imageSrc} 
+            alt={facility?.title || "Sport Arena"} 
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />
         </div>
-
-        {/* Right Side: Information Content */}
-        <div className="flex flex-col justify-between">
-          <div className="space-y-4">
-            <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs px-3 py-1 rounded-full uppercase tracking-wider font-semibold">
-              {facility.category}
-            </span>
-            <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight">{facility.title}</h1>
-            <p className="text-gray-400 leading-relaxed">{facility.description}</p>
-            
-            <div className="pt-4 space-y-2 text-sm text-gray-300">
-              <p>📍 <span className="font-semibold text-white">Location:</span> {facility.location}</p>
-              <p>💵 <span className="font-semibold text-white">Price:</span> ৳{facility.pricePerHour} / hour</p>
-            </div>
-          </div>
-
-          {/* Trigger Button */}
-          <div className="pt-6">
-            <button
-              onClick={() => setIsModalOpen(true)}
-              className="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-4 rounded-xl transition-all shadow-lg shadow-emerald-500/10 hover:scale-[1.01]"
-            >
-              Book Available Slot Now
-            </button>
+        
+        {/* Card Body */}
+        <div className="p-5 space-y-3">
+          <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] px-2.5 py-0.5 rounded-full uppercase tracking-wider font-semibold inline-block">
+            {facility?.category || "Sports"}
+          </span>
+          <h3 className="text-lg font-bold text-white group-hover:text-emerald-400 transition-colors line-clamp-1">
+            {facility?.title || "Untitled Arena"}
+          </h3>
+          <p className="text-sm text-gray-400 line-clamp-2 leading-relaxed">
+            {facility?.description || "No description available for this playground."}
+          </p>
+          <div className="text-xs text-gray-400 space-y-1 pt-1">
+            <p>📍 {facility?.location || "Sylhet"}</p>
           </div>
         </div>
       </div>
 
-      {/* Render the Booking Modal overlay conditionally */}
-      {isModalOpen && (
-        <BookingModal 
-          facility={facility} 
-          userEmail={loggedInUserEmail} 
-          onClose={() => setIsModalOpen(false)} 
-        />
-      )}
+      {/* Action Row */}
+      <div className="p-5 pt-0 grid grid-cols-2 gap-3">
+        <Link 
+          href={`/facilities/${facility?._id}`}
+          className="text-center bg-slate-800 hover:bg-slate-700 text-white font-medium text-xs py-3 rounded-xl transition-colors flex items-center justify-center"
+        >
+          Details
+        </Link>
+        <Link
+          href={`/facilities/${facility?._id}`}
+          className="text-center bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs py-3 rounded-xl transition-all flex items-center justify-center shadow-md shadow-emerald-500/5"
+        >
+          Book Now
+        </Link>
+      </div>
     </div>
   );
 }
