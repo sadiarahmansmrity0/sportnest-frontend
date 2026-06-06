@@ -1,120 +1,128 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Trophy, Calendar, ShieldCheck, Zap, ArrowRight, Activity } from "lucide-react";
+import { Search, MapPin, Activity, ChevronRight, Sparkles, ShieldCheck, Star, Users } from "lucide-react";
 
 export default function HomePage() {
+  const [facilities, setFacilities] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedLocation, setSelectedLocation] = useState("");
+
+  // 1. Data Fetching
+  useEffect(() => {
+    async function fetchFacilities() {
+      try {
+        setLoading(true);
+        const response = await fetch("http://localhost:5000/api/facilities");
+        const data = await response.json();
+
+        // Safely extract the array regardless of object structure
+        if (data && Array.isArray(data.data)) {
+          setFacilities(data.data);
+        } else if (Array.isArray(data)) {
+          setFacilities(data);
+        } else {
+          setFacilities([]);
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        setFacilities([]);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchFacilities();
+  }, []);
+
+  // 2. Robust Filtering Logic
+  const filteredFacilities = facilities.filter((facility) => {
+    // Provide defaults for missing fields to avoid crashes
+    const title = (facility.title || "").toLowerCase();
+    const category = (facility.category || "").toLowerCase();
+    const location = (facility.location || "").toLowerCase();
+    const query = searchQuery.toLowerCase();
+    const locFilter = selectedLocation.toLowerCase();
+
+    const matchesSearch = title.includes(query) || category.includes(query);
+    const matchesLocation = selectedLocation === "" || location.includes(locFilter);
+
+    return matchesSearch && matchesLocation;
+  });
+
+  // 3. Unique Location Extraction
+  const uniqueLocations = [...new Set(facilities.map((f) => f.location).filter(Boolean))];
+
   return (
-    <div className="space-y-16 pb-16">
+    <div className="bg-[#020617] text-white min-h-screen pt-20">
       
-      {/* 🏟️ HERO BANNER SECTION */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-gray-900 via-emerald-950 to-gray-900 text-white py-20 lg:py-28 px-4 sm:px-6 lg:px-8">
-        {/* Subtle Decorative Background Grid */}
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#1f2937_1px,transparent_1px),linear-gradient(to_bottom,#1f2937_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] opacity-20"></div>
+      {/* Hero Section */}
+      <section className="relative overflow-hidden py-24 px-6 border-b border-white/5">
+        <div className="max-w-5xl mx-auto text-center space-y-6">
+          <h1 className="text-4xl sm:text-6xl font-black tracking-tight">
+            Find Your Match. <br />
+            <span className="bg-gradient-to-r from-emerald-400 to-blue-500 bg-clip-text text-transparent">
+              Reserve Your Premium Arena.
+            </span>
+          </h1>
+
+          {/* Search Bar */}
+          <div className="max-w-3xl mx-auto mt-8 bg-slate-900/60 p-2.5 rounded-2xl border border-white/10 backdrop-blur-md flex flex-col md:flex-row gap-2">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search by name or category..."
+              className="flex-1 bg-transparent px-4 py-2.5 text-sm focus:outline-none"
+            />
+            <select
+              value={selectedLocation}
+              onChange={(e) => setSelectedLocation(e.target.value)}
+              className="bg-transparent px-4 py-2.5 text-sm text-slate-400 focus:outline-none cursor-pointer"
+            >
+              <option value="" className="bg-slate-900">All Locations</option>
+              {uniqueLocations.map((loc, i) => (
+                <option key={i} value={loc} className="bg-slate-900">{loc}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+      </section>
+
+      {/* Facility Grid */}
+      <section className="max-w-7xl mx-auto px-4 py-16">
+        <h2 className="text-2xl font-black mb-8">Available Play Arenas</h2>
         
-        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 items-center relative z-10">
-          
-          {/* Left Text Column */}
-          <div className="lg:col-span-7 space-y-6 text-center lg:text-left">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold uppercase tracking-wider">
-              <Activity className="h-3.5 w-3.5 animate-pulse" /> Instant Arena Reservations
-            </div>
-            
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-tight">
-              Your Ultimate Arena <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-300">
-                Booking Companion
-              </span>
-            </h1>
-            
-            <p className="text-gray-300 text-base sm:text-lg max-w-xl mx-auto lg:mx-0 leading-relaxed">
-              Discover local premium multi-sport venues, reserve your slots seamlessly, and coordinate matches flawlessly. From premium indoor badminton courts to floodlit football turfs, secure your playground in seconds.
-            </p>
-            
-            {/* Interactive Action Buttons */}
-            <div className="flex flex-col sm:flex-row justify-center lg:justify-start gap-4 pt-2">
-              <Link href="/facilities" className="btn-primary py-3 px-6 text-base group shadow-lg shadow-emerald-900/40">
-                Explore Facilities
-                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-              </Link>
-              <Link href="/register" className="inline-flex items-center justify-center gap-2 border border-gray-700 bg-gray-800/50 hover:bg-gray-800 text-white font-medium px-6 py-3 rounded-lg transition-colors text-base backdrop-blur-sm">
-                Join Community
-              </Link>
-            </div>
+        {loading ? (
+          <div className="text-center py-20">Loading...</div>
+        ) : filteredFacilities.length === 0 ? (
+          <div className="text-center py-20 border border-dashed border-white/10 rounded-2xl">
+            <Activity className="h-10 w-10 mx-auto text-slate-600 mb-2" />
+            <p className="text-slate-400">No matching facilities found.</p>
           </div>
-          
-          {/* Right Visual Stats Column */}
-          <div className="lg:col-span-5 relative flex justify-center">
-            <div className="relative w-full max-w-sm bg-gradient-to-b from-gray-800/80 to-gray-900/90 border border-gray-700/60 p-6 rounded-2xl shadow-2xl backdrop-blur-md space-y-5">
-              
-              <div className="absolute -top-4 -right-4 bg-emerald-500 text-gray-950 font-black px-3.5 py-1 rounded-md text-xs uppercase tracking-wider transform rotate-3 shadow-md">
-                Live Slots Available
-              </div>
-              
-              <h3 className="text-sm font-bold uppercase tracking-wider text-gray-400">Platform Highlights</h3>
-              
-              {/* Feature 1 */}
-              <div className="flex items-start gap-3.5 bg-gray-800/40 p-3.5 rounded-xl border border-gray-700/30">
-                <div className="p-2 bg-emerald-500/15 rounded-lg text-emerald-400">
-                  <Calendar className="h-5 w-5" />
-                </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredFacilities.map((facility) => (
+              <div key={facility._id} className="bg-slate-900/30 border border-white/10 rounded-2xl overflow-hidden p-5 flex flex-col justify-between">
                 <div>
-                  <h4 className="text-sm font-semibold text-white">Real-time Scheduling</h4>
-                  <p className="text-xs text-gray-400 mt-0.5">No back-and-forth calling. Select your date and time slice instantly.</p>
+                  <img src={facility.image || "https://images.unsplash.com/photo-1541252260730-0412e8e2108e?w=600"} className="h-48 w-full object-cover rounded-lg mb-4" />
+                  <h3 className="font-bold text-lg">{facility.title}</h3>
+                  <div className="flex items-center text-slate-400 text-sm mt-1">
+                    <MapPin className="h-4 w-4 mr-1" /> {facility.location}
+                  </div>
                 </div>
+                <Link 
+                  href={`/facilities/${facility._id}`}
+                  className="mt-6 w-full py-2 bg-emerald-500 text-slate-950 font-bold text-center rounded-xl hover:bg-emerald-400 transition"
+                >
+                  View Details
+                </Link>
               </div>
-
-              {/* Feature 2 */}
-              <div className="flex items-start gap-3.5 bg-gray-800/40 p-3.5 rounded-xl border border-gray-700/30">
-                <div className="p-2 bg-emerald-500/15 rounded-lg text-emerald-400">
-                  <ShieldCheck className="h-5 w-5" />
-                </div>
-                <div>
-                  <h4 className="text-sm font-semibold text-white">Verified Turf Managers</h4>
-                  <p className="text-xs text-gray-400 mt-0.5">Every football field and court listed is structurally premium and certified.</p>
-                </div>
-              </div>
-
-              {/* Feature 3 */}
-              <div className="flex items-start gap-3.5 bg-gray-800/40 p-3.5 rounded-xl border border-gray-700/30">
-                <div className="p-2 bg-emerald-500/15 rounded-lg text-emerald-400">
-                  <Zap className="h-5 w-5" />
-                </div>
-                <div>
-                  <h4 className="text-sm font-semibold text-white">Flexible Cancellations</h4>
-                  <p className="text-xs text-gray-400 mt-0.5">Change of match plans? Update your reservations directly up to 24h prior.</p>
-                </div>
-              </div>
-
-            </div>
+            ))}
           </div>
-
-        </div>
+        )}
       </section>
-
-      {/* 🧭 SPORTS QUICK-CATEGORIES OVERVIEW */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
-        <div className="text-center md:text-left">
-          <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Browse Venues by Sport</h2>
-          <p className="text-sm text-gray-500">Pick an arena optimized for your favorite game</p>
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {[
-            { name: "Football Turfs", icon: "⚽", count: "12 Fields Active" },
-            { name: "Badminton Courts", icon: "🏸", count: "8 Indoor Arenas" },
-            { name: "Cricket Nets", icon: "🏏", count: "6 Practice Slices" },
-            { name: "Swimming Lanes", icon: "🏊", count: "4 Premium Pools" },
-          ].map((sport, i) => (
-            <div key={i} className="bg-white border border-gray-200 hover:border-emerald-500/40 p-5 rounded-xl transition-all shadow-sm hover:shadow-md flex flex-col items-center text-center group cursor-pointer">
-              <span className="text-3xl mb-3 transform group-hover:scale-110 transition-transform">{sport.icon}</span>
-              <h3 className="text-sm font-bold text-gray-800">{sport.name}</h3>
-              <span className="text-xs text-gray-400 mt-1 font-medium bg-gray-100 px-2 py-0.5 rounded-full">{sport.count}</span>
-            </div>
-          ))}
-        </div>
-      </section>
-
     </div>
   );
 }

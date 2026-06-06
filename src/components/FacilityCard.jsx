@@ -11,7 +11,8 @@ export default function FacilityCard({ facility }) {
         <div className="relative overflow-hidden h-48 border-b border-slate-800">
           <img 
             src={imageSrc} 
-            alt={facility?.title || "Sport Arena"} 
+            // 🟢 CHANGED: Use .name instead of .title
+            alt={facility?.name || "Sport Arena"} 
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />
         </div>
@@ -21,8 +22,9 @@ export default function FacilityCard({ facility }) {
           <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] px-2.5 py-0.5 rounded-full uppercase tracking-wider font-semibold inline-block">
             {facility?.category || "Sports"}
           </span>
+          {/* 🟢 CHANGED: Changed facility.title to facility.name */}
           <h3 className="text-lg font-bold text-white group-hover:text-emerald-400 transition-colors line-clamp-1">
-            {facility?.title || "Untitled Arena"}
+            {facility?.name || "Untitled Arena"}
           </h3>
           <p className="text-sm text-gray-400 line-clamp-2 leading-relaxed">
             {facility?.description || "No description available for this playground."}

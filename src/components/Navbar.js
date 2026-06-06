@@ -1,145 +1,124 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Menu, X, Trophy, ChevronDown, LogOut, Calendar, PlusCircle, Settings } from "lucide-react";
+import { useRouter, usePathname } from "next/navigation";
+import { Trophy, Menu, X, LogOut, Calendar, PlusCircle, Settings, Home, Dumbbell } from "lucide-react";
 
 export default function Navbar() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const [userEmail, setUserEmail] = useState(null);
   const [isOpen, setIsOpen] = useState(false);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
-  // Temporary mock authentication state for testing layout options
-  // Later we will link this directly to better-auth (authClient.useSession())
-  const isLoggedIn = true; 
-  const user = {
-    name: "Sadia Rahman",
-    email: "sadiarahmansmrity9@gmail.com",
-    photo: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80"
+  // Sync state with localStorage to check if user is logged in
+  useEffect(() => {
+    const handleAuthCheck = () => {
+      const email = localStorage.getItem("userEmail");
+      setUserEmail(email);
+    };
+
+    handleAuthCheck();
+    
+    // Listen for storage changes or custom navigation updates
+    window.addEventListener("storage", handleAuthCheck);
+    return () => window.removeEventListener("storage", handleAuthCheck);
+  }, [pathname]);
+
+  const handleLogout = () => {
+    localStorage.removeItem("userEmail");
+    setUserEmail(null);
+    setIsOpen(false);
+    router.push("/login");
   };
 
   return (
-    <nav className="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-[#020617]/80 backdrop-blur-md border-b border-white/5 text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
+        <div className="flex items-center justify-between h-20">
           
-          {/* Logo & Site Name */}
-          <div className="flex items-center">
-            <Link href="/" className="flex items-center gap-2 text-emerald-600 font-bold text-xl tracking-tight">
-              <Trophy className="h-6 w-6 stroke-[2.5]" />
-              <span>Sport<span className="text-gray-900">Nest</span></span>
+          {/* Logo & Platform Name */}
+          <Link href="/" className="flex items-center gap-2 text-emerald-400 font-black text-xl tracking-tight">
+            <Trophy className="h-6 w-6 stroke-[2.5]" />
+            <span>Sport<span className="text-white">Nest</span></span>
+          </Link>
+
+          {/* Desktop Links */}
+          <div className="hidden md:flex items-center gap-6 text-sm font-medium">
+            <Link href="/" className={`hover:text-emerald-400 transition-colors ${pathname === "/" ? "text-emerald-400 font-bold" : "text-slate-300"}`}>
+              Home
             </Link>
-            
-            {/* Desktop Navigation Links (Left Side) */}
-            <div className="hidden md:flex ml-10 space-x-8">
-              <Link href="/" className="text-gray-700 hover:text-emerald-600 font-medium text-sm transition-colors pt-1">
-                Home
-              </Link>
-              <Link href="/facilities" className="text-gray-700 hover:text-emerald-600 font-medium text-sm transition-colors pt-1">
-                All Facilities
-              </Link>
-            </div>
+            <Link href="/facilities" className={`hover:text-emerald-400 transition-colors ${pathname === "/facilities" ? "text-emerald-400 font-bold" : "text-slate-300"}`}>
+              All Facilities
+            </Link>
+
+            {/* Dynamic Private Routes */}
+            {userEmail && (
+              <>
+                <Link href="/dashboard" className={`hover:text-emerald-400 transition-colors ${pathname === "/dashboard" ? "text-emerald-400 font-bold" : "text-slate-300"}`}>
+                  My Bookings
+                </Link>
+                <Link href="/facilities/add" className={`hover:text-emerald-400 transition-colors ${pathname === "/facilities/add" ? "text-emerald-400 font-bold" : "text-slate-300"}`}>
+                  Add Facility
+                </Link>
+                <Link href="/facilities/manage" className={`hover:text-emerald-400 transition-colors ${pathname === "/facilities/manage" ? "text-emerald-400 font-bold" : "text-slate-300"}`}>
+                  Manage My Facilities
+                </Link>
+              </>
+            )}
           </div>
 
-          {/* Desktop Right Side Configuration */}
-          <div className="hidden md:flex items-center space-x-4">
-            {isLoggedIn ? (
-              <div className="relative">
-                <button
-                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                  className="flex items-center gap-2 focus:outline-none p-1.5 rounded-full hover:bg-gray-100 transition-all"
+          {/* Authentication Action Button / Profile Logout display */}
+          <div className="hidden md:flex items-center gap-4">
+            {userEmail ? (
+              <div className="flex items-center gap-3 bg-slate-900 border border-white/10 px-4 py-2 rounded-xl">
+                <span className="text-xs font-mono text-emerald-400 max-w-[120px] truncate">{userEmail}</span>
+                <button 
+                  onClick={handleLogout} 
+                  className="text-slate-400 hover:text-red-400 transition-colors p-1"
+                  title="Logout Profile"
                 >
-                  <img
-                    src={user.photo}
-                    alt={user.name}
-                    className="h-8 w-8 rounded-full object-cover border border-emerald-500"
-                  />
-                  <span className="text-sm font-medium text-gray-700 max-w-[120px] truncate">{user.name}</span>
-                  <ChevronDown className="h-4 w-4 text-gray-500" />
+                  <LogOut className="h-4 w-4" />
                 </button>
-
-                {/* Profile Dropdown Menu */}
-                {isDropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-xl shadow-lg py-2 z-50">
-                    <div className="px-4 py-2 border-b border-gray-100">
-                      <p className="text-xs text-gray-400">Signed in as</p>
-                      <p className="text-sm font-semibold text-gray-800 truncate">{user.email}</p>
-                    </div>
-                    
-                    <Link href="/my-bookings" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-emerald-50 hover:text-emerald-600 transition-colors">
-                      <Calendar className="h-4 w-4" /> My Bookings
-                    </Link>
-                    <Link href="/add-facility" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-emerald-50 hover:text-emerald-600 transition-colors">
-                      <PlusCircle className="h-4 w-4" /> Add Facility
-                    </Link>
-                    <Link href="/manage-facilities" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-emerald-50 hover:text-emerald-600 transition-colors">
-                      <Settings className="h-4 w-4" /> Manage My Facilities
-                    </Link>
-                    
-                    <div className="border-t border-gray-100 mt-1">
-                      <button className="flex w-full items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors">
-                        <LogOut className="h-4 w-4" /> Logout
-                      </button>
-                    </div>
-                  </div>
-                )}
               </div>
             ) : (
-              <Link href="/login" className="btn-primary">
-                Login
+              <Link href="/login" className="px-5 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs rounded-xl transition-all shadow-md shadow-emerald-500/10">
+                Sign In
               </Link>
             )}
           </div>
 
-          {/* Mobile hamburger menu toggle */}
-          <div className="flex items-center md:hidden">
-            <button
-              onClick={() => setIsOpen(!isOpen)}
-              className="text-gray-600 hover:text-gray-900 focus:outline-none p-2 rounded-lg hover:bg-gray-100 transition-all"
-            >
+          {/* Mobile Hamburguer Toggle Button */}
+          <div className="md:hidden">
+            <button onClick={() => setIsOpen(!isOpen)} className="text-slate-400 hover:text-white transition-colors">
               {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </button>
           </div>
         </div>
       </div>
 
-      {/* Mobile Drawer Menu Expansion */}
+      {/* Mobile Drawer Navigation Menu */}
       {isOpen && (
-        <div className="md:hidden border-t border-gray-100 bg-gray-50 px-4 pt-2 pb-4 space-y-2">
-          <Link href="/" className="block px-3 py-2 rounded-lg text-base font-medium text-gray-700 hover:bg-emerald-50 hover:text-emerald-600">
-            Home
-          </Link>
-          <Link href="/facilities" className="block px-3 py-2 rounded-lg text-base font-medium text-gray-700 hover:bg-emerald-50 hover:text-emerald-600">
-            All Facilities
-          </Link>
+        <div className="md:hidden bg-[#020617] border-b border-white/5 px-4 pt-2 pb-6 space-y-3 flex flex-col text-sm">
+          <Link href="/" onClick={() => setIsOpen(false)} className="text-slate-300 py-2 border-b border-white/5">Home</Link>
+          <Link href="/facilities" onClick={() => setIsOpen(false)} className="text-slate-300 py-2 border-b border-white/5">All Facilities</Link>
           
-          {isLoggedIn ? (
-            <div className="border-t border-gray-200 pt-3 mt-2">
-              <div className="flex items-center px-3 mb-3">
-                <img src={user.photo} alt={user.name} className="h-9 w-9 rounded-full border border-emerald-500" />
-                <div className="ml-3">
-                  <p className="text-sm font-semibold text-gray-800">{user.name}</p>
-                  <p className="text-xs text-gray-500 truncate">{user.email}</p>
-                </div>
+          {userEmail ? (
+            <>
+              <Link href="/dashboard" onClick={() => setIsOpen(false)} className="text-slate-300 py-2 border-b border-white/5">My Bookings</Link>
+              <Link href="/facilities/add" onClick={() => setIsOpen(false)} className="text-slate-300 py-2 border-b border-white/5">Add Facility</Link>
+              <Link href="/facilities/manage" onClick={() => setIsOpen(false)} className="text-slate-300 py-2 border-b border-white/5">Manage My Facilities</Link>
+              <div className="pt-2 flex flex-col gap-2">
+                <p className="text-xs text-slate-500 font-mono truncate">{userEmail}</p>
+                <button onClick={handleLogout} className="w-full text-center py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 font-bold rounded-xl transition-all">
+                  Sign Out Account
+                </button>
               </div>
-              <Link href="/my-bookings" className="block px-3 py-2 rounded-lg text-base font-medium text-gray-600 hover:bg-emerald-50 hover:text-emerald-600">
-                My Bookings
-              </Link>
-              <Link href="/add-facility" className="block px-3 py-2 rounded-lg text-base font-medium text-gray-600 hover:bg-emerald-50 hover:text-emerald-600">
-                Add Facility
-              </Link>
-              <Link href="/manage-facilities" className="block px-3 py-2 rounded-lg text-base font-medium text-gray-600 hover:bg-emerald-50 hover:text-emerald-600">
-                Manage My Facilities
-              </Link>
-              <button className="flex w-full items-center gap-2 px-3 py-2 mt-2 rounded-lg text-base font-medium text-red-600 hover:bg-red-50">
-                <LogOut className="h-4 w-4" /> Logout
-              </button>
-            </div>
+            </>
           ) : (
-            <div className="pt-2">
-              <Link href="/login" className="block w-full text-center btn-primary">
-                Login
-              </Link>
-            </div>
+            <Link href="/login" onClick={() => setIsOpen(false)} className="w-full text-center py-2.5 bg-emerald-500 text-slate-950 font-bold rounded-xl transition-all">
+              Sign In Profile
+            </Link>
           )}
         </div>
       )}

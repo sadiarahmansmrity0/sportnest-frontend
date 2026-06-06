@@ -4,99 +4,135 @@ import FacilityCard from '@/components/FacilityCard';
 
 export default function FacilitiesPage() {
   const [facilities, setFacilities] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [filtered, setFiltered] = useState([]);
   const [loading, setLoading] = useState(true);
+  
+  // Filtering & Sorting State
+  const [search, setSearch] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [sortByPrice, setSortByPrice] = useState('none'); // 'none' | 'asc' | 'desc'
 
   useEffect(() => {
     fetch('http://localhost:5000/api/facilities')
       .then((res) => res.json())
       .then((data) => {
-        if (Array.isArray(data)) {
-          setFacilities(data);
-        } else if (data && Array.isArray(data.facilities)) {
-          setFacilities(data.facilities);
-        } else if (data && data.data && Array.isArray(data.data)) {
-          setFacilities(data.data);
-        } else {
-          setFacilities([]);
-        }
+        const targetArray = Array.isArray(data) ? data : (data?.facilities || []);
+        setFacilities(targetArray);
+        setFiltered(targetArray);
         setLoading(false);
       })
       .catch((err) => {
-        console.error("Failed fetching facilities:", err);
-        setFacilities([]);
+        console.error("Error fetching facilities catalog:", err);
         setLoading(false);
       });
   }, []);
 
-  //  Filter logic matching user search criteria & picked sport tag
-  const filteredFacilities = facilities.filter((field) => {
-    const matchesSearch = field?.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          field?.location?.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesCategory = selectedCategory === 'All' || 
-                            field?.category?.toLowerCase() === selectedCategory.toLowerCase();
+  // Compute Filtering & Sorting instantly on state change
+  useEffect(() => {
+  // If we don't have facilities yet, do nothing
+  if (!facilities || facilities.length === 0) return;
 
-    return matchesSearch && matchesCategory;
+  const filteredResults = facilities.filter((f) => {
+    const nameMatch = f.name?.toLowerCase().includes(search.toLowerCase());
+    const locationMatch = f.location?.toLowerCase().includes(search.toLowerCase());
+    const categoryMatch = selectedCategory === 'All' || f.category === selectedCategory;
+    
+    return (nameMatch || locationMatch) && categoryMatch;
   });
 
-  const categories = ['All', 'Football', 'Badminton', 'Cricket', 'Swimming'];
+  // Sort logic (only if you are using sortByPrice)
+  if (sortByPrice === 'low-to-high') {
+    filteredResults.sort((a, b) => a.pricePerHour - b.pricePerHour);
+  } else if (sortByPrice === 'high-to-low') {
+    filteredResults.sort((a, b) => b.pricePerHour - a.pricePerHour);
+  }
 
-  if (loading) return <div className="text-white p-10 text-center text-lg">Loading amazing arenas...</div>;
+  setFiltered(filteredResults);
+}, [search, selectedCategory, sortByPrice, facilities]);
+  const categories = ['All', 'Football', 'Cricket', 'Badminton', 'Swimming'];
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white p-8 md:p-16">
-      <div className="max-w-7xl mx-auto space-y-8 pt-10">
+    <div className="min-h-screen bg-[#020617] text-slate-100 pt-28 pb-20 antialiased">
+      <div className="max-w-7xl mx-auto px-6">
         
-        {/* Header Title Section */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-4 border-b border-slate-900">
-          <div>
-            <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight">Available Arenas & Fields</h1>
-            <p className="text-gray-400 mt-2">Pick your playground and reserve your slot instantly.</p>
-          </div>
+        {/* Header Section */}
+        <div className="mb-12 space-y-2">
+          <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-white">Explore Arenas</h1>
+          <p className="text-sm text-slate-400">Discover top tier playing grounds near your coordinates and secure active slots.</p>
         </div>
 
-        {/* Search & Category Filter Section */}
-        <div className="flex flex-col md:flex-row gap-4 justify-between items-center bg-slate-900/50 p-4 rounded-2xl border border-slate-900">
-          {/* Search Input field */}
-          <div className="w-full md:w-96 relative">
-            <input
-              type="text"
-              placeholder="Search by arena name or location..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors"
+        {/* Filters Controls Panel */}
+        <div className="bg-white/5 border border-white/10 backdrop-blur-xl p-5 rounded-2xl flex flex-col lg:flex-row gap-4 items-center justify-between mb-10 shadow-xl">
+          
+          {/* Search Box Input */}
+          <div className="relative w-full lg:max-w-xs">
+            <input 
+              type="text" 
+              placeholder="Search by arena name or location..." 
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full bg-slate-950/60 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-emerald-500/50 transition-all"
             />
           </div>
 
-          {/* Sport Categories Buttons */}
-          <div className="flex flex-wrap gap-2 w-full md:w-auto">
+          {/* Category Quick Tags */}
+          <div className="flex flex-wrap gap-2 w-full lg:w-auto items-center">
             {categories.map((cat) => (
               <button
                 key={cat}
                 onClick={() => setSelectedCategory(cat)}
-                className={`px-4 py-2.5 rounded-xl text-xs font-semibold tracking-wide transition-all ${
-                  selectedCategory === cat
-                    ? 'bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/10'
-                    : 'bg-slate-950 text-gray-400 border border-slate-800 hover:text-white hover:border-slate-700'
+                className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider border transition-all ${
+                  selectedCategory === cat 
+                    ? 'bg-emerald-500 border-emerald-500 text-slate-950 shadow-md shadow-emerald-500/10' 
+                    : 'bg-white/5 border-white/5 text-slate-400 hover:text-white hover:bg-white/10'
                 }`}
               >
                 {cat}
               </button>
             ))}
           </div>
+
+          {/* Sorting Dropdown Selection Menu */}
+          <div className="w-full lg:w-auto flex items-center gap-3">
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">Sort By:</span>
+            <select
+              value={sortByPrice}
+              onChange={(e) => setSortByPrice(e.target.value)}
+              className="bg-slate-950/60 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-slate-300 focus:outline-none focus:border-emerald-500/50 cursor-pointer w-full lg:w-auto"
+            >
+              <option value="none">Default Listing</option>
+              <option value="asc">Price: Low to High</option>
+              <option value="desc">Price: High to Low</option>
+            </select>
+          </div>
+
         </div>
 
-        {/* Responsive Grid Catalog display */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredFacilities.length > 0 ? (
-            filteredFacilities.map((field) => (
-              <FacilityCard key={field._id} facility={field} />
+        {/* Cards Grid Space */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {loading ? (
+            [1, 2, 3, 4, 5, 6].map((n) => (
+              <div key={n} className="bg-white/5 border border-white/10 rounded-3xl p-6 animate-pulse">
+                <div className="bg-slate-800 h-48 rounded-xl mb-5" />
+                <div className="space-y-3">
+                  <div className="bg-slate-800 h-5 rounded w-1/4" />
+                  <div className="bg-slate-800 h-6 rounded w-3/4" />
+                  <div className="bg-slate-800 h-4 rounded w-1/2 mt-4" />
+                </div>
+              </div>
+            ))
+          ) : filtered.length > 0 ? (
+            filtered.map((item) => (
+              <div 
+                key={item._id} 
+                className="group rounded-3xl bg-white/5 border border-white/10 backdrop-blur-md hover:border-emerald-500/40 hover:shadow-[0_0_40px_rgba(16,185,129,0.15)] transition-all duration-500 hover:-translate-y-1 overflow-hidden"
+              >
+                <FacilityCard facility={item} />
+              </div>
             ))
           ) : (
-            <div className="col-span-full text-center py-16 bg-slate-900/20 rounded-2xl border border-dashed border-slate-900">
-              <p className="text-gray-500 text-base">No arenas match your search filters.</p>
+            <div className="col-span-full text-center py-24 border border-dashed border-white/10 rounded-3xl text-slate-500 text-sm">
+              No matching facilities match your parameters.
             </div>
           )}
         </div>

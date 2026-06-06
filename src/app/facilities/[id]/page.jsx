@@ -1,79 +1,115 @@
-'use client';
-import { useState, useEffect, use } from 'react';
-import BookingModal from '@/components/BookingModal';
+"use client";
 
-export default function FacilityDetails({ params: paramsPromise }) {
-  const params = use(paramsPromise);
-  
+import { useState, useEffect } from "react";
+import { useParams } from "next/navigation";
+import { MapPin, Info, ChevronLeft } from "lucide-react";
+import Link from "next/link";
+
+export default function FacilityDetailsPage() {
+  const { id } = useParams();
   const [facility, setFacility] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  
+  // Booking states
+  const [showBookingForm, setShowBookingForm] = useState(false);
+  const [bookingDate, setBookingDate] = useState("");
+  const [bookingSlot, setBookingSlot] = useState("");
+  const [bookingStatus, setBookingStatus] = useState("");
 
   useEffect(() => {
-    fetch(`http://localhost:5000/api/facilities`)
-      .then((res) => res.json())
-      .then((data) => {
-        // Safe check to find the raw array wrapper
-        const targetArray = Array.isArray(data) 
-          ? data 
-          : (data?.facilities || data?.data || []);
-          
-        const found = targetArray.find(f => f._id === params.id);
-        setFacility(found);
+    if (!id) return;
+    async function fetchFacility() {
+      try {
+        const res = await fetch(`http://localhost:5000/api/facilities/${id}`);
+        const data = await res.json();
+        setFacility(data.data || data);
+      } catch (err) {
+        console.error("Failed to fetch:", err);
+      } finally {
         setLoading(false);
-      })
-      .catch((err) => {
-        console.error("Error fetching facility details:", err);
-        setLoading(false);
-      });
-  }, [params.id]);
+      }
+    }
+    fetchFacility();
+  }, [id]);
 
-  if (loading) return <div className="text-white p-10 text-center text-lg">Loading field details...</div>;
-  if (!facility) return <div className="text-white p-10 text-center text-lg">Facility not found.</div>;
+  const handleConfirmBooking = async () => {
+    if (!bookingDate || !bookingSlot) {
+      alert("Please select both a date and a time slot.");
+      return;
+    }
+
+    setBookingStatus("Booking...");
+    try {
+      const res = await fetch("http://localhost:5000/api/bookings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          facilityId: facility._id,
+          facilityTitle: facility.title,
+          userEmail: "user@example.com",
+          date: bookingDate,
+          slot: bookingSlot,
+          status: "pending"
+        }),
+      });
+
+      if (res.ok) {
+        setBookingStatus("Booking confirmed! ✅");
+        setShowBookingForm(false);
+      } else {
+        setBookingStatus("Booking failed.");
+      }
+    } catch (err) {
+      setBookingStatus("Error connecting to server.");
+    }
+  };
+
+  if (loading) return <div className="text-white text-center pt-20">Loading details...</div>;
+  if (!facility) return <div className="text-white text-center pt-20">Facility not found.</div>;
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white p-6 md:p-12">
-      <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 pt-16">
-        <div>
-          <img 
-            src={facility.image} 
-            alt={facility.title} 
-            className="w-full h-96 object-cover rounded-2xl border border-slate-800 shadow-xl"
-          />
-        </div>
+    <div className="bg-[#020617] text-white min-h-screen pt-24 px-6 pb-20">
+      <div className="max-w-4xl mx-auto">
+        <Link href="/" className="text-slate-400 hover:text-emerald-400 flex items-center mb-6 text-sm">
+          <ChevronLeft className="h-4 w-4" /> Back to Home
+        </Link>
 
-        <div className="flex flex-col justify-between space-y-6">
-          <div className="space-y-4">
-            <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs px-3 py-1 rounded-full uppercase tracking-wider font-semibold">
-              {facility.category}
-            </span>
-            <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight">{facility.title}</h1>
-            <p className="text-gray-400 leading-relaxed text-base">{facility.description}</p>
-            
-            <div className="pt-4 space-y-3 text-sm text-gray-300 border-t border-slate-900">
-              <p>📍 <span className="font-semibold text-white">Location:</span> {facility.location}</p>
-              <p>৳ <span className="font-semibold text-white">Price:</span> {facility.pricePerHour} BDT / hour</p>
+        <div className="bg-slate-900/50 border border-white/10 rounded-3xl overflow-hidden shadow-2xl">
+          <img src={facility.image} className="w-full h-80 object-cover" alt={facility.title} />
+          
+          <div className="p-8">
+            <h1 className="text-3xl font-black">{facility.title}</h1>
+            <div className="flex items-center text-slate-400 mt-2 mb-8">
+              <MapPin className="h-4 w-4 mr-1" /> {facility.location}
             </div>
-          </div>
 
-          <div>
-            <button
-              onClick={() => setIsModalOpen(true)}
-              className="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-4 rounded-xl transition-all shadow-lg shadow-emerald-500/20 active:scale-[0.99]"
-            >
-              Book Available Slot Now
-            </button>
+            <h3 className="font-bold mb-3 flex items-center"><Info className="h-5 w-5 mr-2 text-emerald-500"/> About</h3>
+            <p className="text-slate-400 leading-relaxed mb-8">{facility.description}</p>
+
+            {!showBookingForm ? (
+              <button 
+                onClick={() => setShowBookingForm(true)}
+                className="w-full py-4 bg-emerald-500 text-slate-950 font-black rounded-xl hover:bg-emerald-400 transition"
+              >
+                {bookingStatus || "Reserve This Arena"}
+              </button>
+            ) : (
+              <div className="p-6 bg-slate-950 border border-emerald-500/30 rounded-2xl">
+                <h3 className="font-bold mb-4">Complete Your Booking</h3>
+                <input type="date" className="w-full bg-slate-900 p-3 rounded-lg mb-3" onChange={(e) => setBookingDate(e.target.value)} />
+                <select className="w-full bg-slate-900 p-3 rounded-lg mb-4" onChange={(e) => setBookingSlot(e.target.value)}>
+                  <option value="">Select a time</option>
+                  <option value="06:00 PM - 07:30 PM">06:00 PM - 07:30 PM</option>
+                  <option value="08:00 PM - 09:30 PM">08:00 PM - 09:30 PM</option>
+                </select>
+                <button onClick={handleConfirmBooking} className="w-full py-3 bg-emerald-500 text-slate-950 font-bold rounded-xl">
+                  Confirm Reservation
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
-
-      {isModalOpen && (
-        <BookingModal 
-          facility={facility} 
-          userEmail="sadiarahmansmrity9@gmail.com" 
-          onClose={() => setIsModalOpen(false)} 
-        />
-      )}
     </div>
   );
 }
