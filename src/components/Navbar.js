@@ -61,7 +61,7 @@ export default function Navbar() {
                 <Link href="/add-facility" className={`hover:text-emerald-400 transition-colors ${pathname === "/add-facility" ? "text-emerald-400 font-bold" : "text-slate-300"}`}>
                   Add Facility
                 </Link>
-                <Link href="/facilities/manage" className={`hover:text-emerald-400 transition-colors ${pathname === "/facilities/manage" ? "text-emerald-400 font-bold" : "text-slate-300"}`}>
+                <Link href="/manage-facilities" className={`hover:text-emerald-400 transition-colors ${pathname === "/manage-facilities" ? "text-emerald-400 font-bold" : "text-slate-300"}`}>
                   Manage My Facilities
                 </Link>
               </>
