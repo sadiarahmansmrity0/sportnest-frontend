@@ -58,7 +58,7 @@ export default function Navbar() {
                 <Link href="/dashboard" className={`hover:text-emerald-400 transition-colors ${pathname === "/dashboard" ? "text-emerald-400 font-bold" : "text-slate-300"}`}>
                   My Bookings
                 </Link>
-                <Link href="/facilities/add" className={`hover:text-emerald-400 transition-colors ${pathname === "/facilities/add" ? "text-emerald-400 font-bold" : "text-slate-300"}`}>
+                <Link href="/add-facility" className={`hover:text-emerald-400 transition-colors ${pathname === "/add-facility" ? "text-emerald-400 font-bold" : "text-slate-300"}`}>
                   Add Facility
                 </Link>
                 <Link href="/facilities/manage" className={`hover:text-emerald-400 transition-colors ${pathname === "/facilities/manage" ? "text-emerald-400 font-bold" : "text-slate-300"}`}>
