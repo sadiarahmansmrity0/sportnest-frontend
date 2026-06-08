@@ -1,5 +1,5 @@
 import Link from 'next/link';
-
+import { API_URL } from "@/lib/api";
 export default function FacilityCard({ facility }) {
   // Safe default fallback images if the database field is empty
   const imageSrc = facility?.image || "https://images.unsplash.com/photo-1626224583764-f87db24ac4ea";

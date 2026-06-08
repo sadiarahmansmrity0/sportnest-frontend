@@ -1,12 +1,12 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-
+import { API_URL } from "@/lib/api";
 export default function AllFacilitiesPage() {
   const [facilities, setFacilities] = useState([]);
 
   useEffect(() => {
-    fetch("http://localhost:5000/api/facilities")
+    fetch("${API_URL/api/facilities")
       .then((res) => res.json())
       .then((data) => {
         if (data.success) setFacilities(data.data);

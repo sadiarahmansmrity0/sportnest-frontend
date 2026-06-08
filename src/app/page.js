@@ -1,5 +1,5 @@
 "use client";
-
+import { API_URL } from "@/lib/api";
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Search, MapPin, Activity, Sparkles } from "lucide-react";
@@ -16,7 +16,7 @@ export default function HomePage() {
     async function fetchFacilities() {
       try {
         setLoading(true);
-        const response = await fetch("http://localhost:5000/api/facilities");
+        const response = await fetch("${API_URL/api/facilities");
         const data = await response.json();
 
         // Safely extract the array

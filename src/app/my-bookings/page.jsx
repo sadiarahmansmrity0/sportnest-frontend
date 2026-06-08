@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-
+import { API_URL } from "@/lib/api";
 export default function MyBookingsPage() {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -21,7 +21,7 @@ export default function MyBookingsPage() {
       }
 
       try {
-        const url = `http://localhost:5000/api/bookings?userEmail=${encodeURIComponent(userEmail)}`;
+       const url = `${API_URL}/api/bookings?userEmail=${encodeURIComponent(userEmail)}`;
         console.log("DEBUG: Fetching from URL:", url);
         
         const res = await fetch(url);

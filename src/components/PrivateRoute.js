@@ -1,7 +1,7 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-
+import { API_URL } from "@/lib/api";
 export default function PrivateRoute({ children }) {
   const [authorized, setAuthorized] = useState(false);
   const router = useRouter();

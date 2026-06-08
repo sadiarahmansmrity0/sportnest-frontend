@@ -1,5 +1,5 @@
 "use client";
-
+import { API_URL } from "@/lib/api";
 import { useState, useEffect } from 'react';
 import FacilityCard from '@/components/FacilityCard';
 
@@ -14,7 +14,7 @@ export default function FacilitiesPage() {
   const [sortByPrice, setSortByPrice] = useState('none'); // 'none' | 'asc' | 'desc'
 
   useEffect(() => {
-    fetch('http://localhost:5000/api/facilities')
+    fetch('${API_URL/api/facilities')
       .then((res) => res.json())
       .then((data) => {
         console.log("DEBUG: Facilities Raw API Data Received:", data);

@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import PrivateRoute from "@/components/PrivateRoute";
+import { API_URL } from "@/lib/api";
 
 function ManageFacilities() {
   const [facilities, setFacilities] = useState([]);
@@ -8,17 +9,16 @@ function ManageFacilities() {
   const [editForm, setEditForm] = useState({});
   const [userEmail, setUserEmail] = useState("");
 
-  // Set email from localStorage safely
   useEffect(() => {
     setUserEmail(localStorage.getItem("userEmail") || "");
   }, []);
 
-  // Fetch facilities for this specific owner
   useEffect(() => {
     async function fetchMyFacilities() {
       if (!userEmail) return;
       try {
-        const res = await fetch(`http://localhost:5000/api/facilities?ownerEmail=${userEmail}`);
+        // FIXED: Used ${API_URL}
+        const res = await fetch(`${API_URL}/api/facilities?ownerEmail=${userEmail}`);
         const result = await res.json();
         if (result.success) setFacilities(result.data);
       } catch (err) {
@@ -34,14 +34,14 @@ function ManageFacilities() {
   };
 
   const handleSave = async (id) => {
-    // 1. Create a copy of the editForm
-    const { _id, ...dataToUpdate } = editForm; // This removes _id from the data
+    const { _id, ...dataToUpdate } = editForm;
 
     try {
-        const res = await fetch(`http://localhost:5000/api/facilities/${id}`, {
+        // FIXED: Used ${API_URL}
+        const res = await fetch(`${API_URL}/api/facilities/${id}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(dataToUpdate), // Send the cleaned data
+            body: JSON.stringify(dataToUpdate),
         });
 
         const result = await res.json();
@@ -55,19 +55,19 @@ function ManageFacilities() {
     } catch (err) {
         console.error("Save error:", err);
     }
-};
+  };
 
- const handleDelete = async (id) => {
+  const handleDelete = async (id) => {
     if (!confirm("Are you sure you want to delete this facility?")) return;
     
     try {
-        const res = await fetch(`http://localhost:5000/api/facilities/${id}`, { 
+        // FIXED: Used ${API_URL}
+        const res = await fetch(`${API_URL}/api/facilities/${id}`, { 
             method: 'DELETE' 
         });
         const result = await res.json();
         
         if (result.success) {
-            // Remove the item from the local state so it disappears from the UI immediately
             setFacilities(facilities.filter(f => f._id !== id));
         } else {
             alert("Failed to delete from database: " + result.message);
@@ -75,7 +75,7 @@ function ManageFacilities() {
     } catch (err) {
         console.error("Delete error:", err);
     }
-};
+  };
 
   return (
     <div className="min-h-screen bg-[#020617] text-white pt-28 px-6">
@@ -85,7 +85,11 @@ function ManageFacilities() {
           <div key={f._id} className="bg-slate-900 p-6 rounded-2xl border border-white/10">
             {editingId === f._id ? (
               <div className="space-y-2">
-                <input value={editForm.name} onChange={(e) => setEditForm({...editForm, name: e.target.value})} className="text-black w-full p-1 rounded" />
+                <input 
+                  value={editForm.name || ""} 
+                  onChange={(e) => setEditForm({...editForm, name: e.target.value})} 
+                  className="text-black w-full p-1 rounded" 
+                />
                 <button onClick={() => handleSave(f._id)} className="bg-green-600 px-4 py-1 mr-2 rounded">Save</button>
                 <button onClick={() => setEditingId(null)} className="bg-gray-600 px-4 py-1 rounded">Cancel</button>
               </div>

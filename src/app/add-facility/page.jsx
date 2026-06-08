@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import PrivateRoute from "@/components/PrivateRoute";
-
+import { API_URL } from "@/lib/api";
 function AddFacilityForm() {
   const [formData, setFormData] = useState({
     name: "",
@@ -24,7 +24,7 @@ function AddFacilityForm() {
       booking_count: 0 // Initialize to 0 as per requirements
     };
 
-    const res = await fetch("http://localhost:5000/api/facilities", {
+    const res = await fetch("${API_URL/api/facilities", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(newFacility),

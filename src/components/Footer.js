@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Trophy } from "lucide-react";
-
+import { API_URL } from "@/lib/api";
 export default function Footer() {
   return (
     <footer className="bg-[#020617] border-t border-white/5 text-slate-400 text-xs py-12 px-6">

@@ -1,54 +1,70 @@
 "use client";
-import { useParams } from "next/navigation"; // To get the ID from URL
+import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
+// This import is CRITICAL. It connects your component to your URL settings.
+import { API_URL } from "@/lib/api"; 
 
 export default function BookingPage() {
-  const { id } = useParams(); // This gets the ID from the URL (e.g., '6a22f87...')
+  const { id } = useParams();
   const [facility, setFacility] = useState(null);
 
   useEffect(() => {
-    // Fetch only this one facility's details
-    fetch(`http://localhost:5000/api/facilities/${id}`)
-      .then(res => res.json())
-      .then(data => setFacility(data.data));
+    // Fetches the specific facility details
+    fetch(`${API_URL}/api/facilities/${id}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          setFacility(data.data);
+        }
+      })
+      .catch((err) => console.error("Error fetching facility:", err));
   }, [id]);
 
- const handleBooking = async () => {
-  const userEmail = localStorage.getItem("userEmail");
-  
-  // 1. Gather your booking data
-  const bookingData = {
-    facilityId: id, // From the URL
-    facilityTitle: facility.name, // From the facility data we fetched
-    userEmail: userEmail,
-    date: "2026-06-30", // Replace these with your state values from the form inputs
-    slot: "10:00 AM - 11:00 AM", // Replace with your state values
-    status: "pending"
+  const handleBooking = async () => {
+    const userEmail = localStorage.getItem("userEmail");
+    
+    const bookingData = {
+      facilityId: id,
+      facilityTitle: facility.name,
+      userEmail: userEmail,
+      date: "2026-06-30",
+      slot: "10:00 AM - 11:00 AM",
+      status: "pending"
+    };
+
+    try {
+      // Sends the booking request to the Render backend
+      const res = await fetch(`${API_URL}/api/bookings`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(bookingData),
+      });
+
+      const data = await res.json();
+      
+      if (data.success) {
+        alert("Booking success!");
+        window.location.href = "/my-bookings";
+      } else {
+        alert("Booking failed: " + data.message);
+      }
+    } catch (err) {
+      console.error("Booking error:", err);
+      alert("An error occurred while booking.");
+    }
   };
-
-  // 2. Send it to the server
-  const res = await fetch("http://localhost:5000/api/bookings", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(bookingData),
-  });
-
-  const data = await res.json();
-  
-  // 3. Close the loop: Redirect the user
-  if (data.success) {
-    alert("Booking success!");
-    window.location.href = "/my-bookings"; // Or your dashboard page
-  }
-};
 
   if (!facility) return <div>Loading...</div>;
 
   return (
     <div className="pt-24 px-6 text-white">
       <h1>Booking for {facility.name}</h1>
-      {/* Add your booking form here */}
-      <button onClick={handleBooking}>Confirm Booking</button>
+      <button 
+        onClick={handleBooking}
+        className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-4"
+      >
+        Confirm Booking
+      </button>
     </div>
   );
 }
