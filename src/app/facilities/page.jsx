@@ -1,4 +1,5 @@
-'use client';
+"use client";
+
 import { useState, useEffect } from 'react';
 import FacilityCard from '@/components/FacilityCard';
 
@@ -16,7 +17,18 @@ export default function FacilitiesPage() {
     fetch('http://localhost:5000/api/facilities')
       .then((res) => res.json())
       .then((data) => {
-        const targetArray = Array.isArray(data) ? data : (data?.facilities || []);
+        console.log("DEBUG: Facilities Raw API Data Received:", data);
+        
+        // CRITICAL FIX: Matches your backend's res.json({ success: true, data: facilities })
+        let targetArray = [];
+        if (data && Array.isArray(data.data)) {
+          targetArray = data.data;
+        } else if (Array.isArray(data)) {
+          targetArray = data;
+        } else if (data && Array.isArray(data.facilities)) {
+          targetArray = data.facilities;
+        }
+
         setFacilities(targetArray);
         setFiltered(targetArray);
         setLoading(false);
@@ -29,26 +41,33 @@ export default function FacilitiesPage() {
 
   // Compute Filtering & Sorting instantly on state change
   useEffect(() => {
-  // If we don't have facilities yet, do nothing
-  if (!facilities || facilities.length === 0) return;
+    if (!facilities || facilities.length === 0) {
+      setFiltered([]);
+      return;
+    }
 
-  const filteredResults = facilities.filter((f) => {
-    const nameMatch = f.name?.toLowerCase().includes(search.toLowerCase());
-    const locationMatch = f.location?.toLowerCase().includes(search.toLowerCase());
-    const categoryMatch = selectedCategory === 'All' || f.category === selectedCategory;
-    
-    return (nameMatch || locationMatch) && categoryMatch;
-  });
+    const filteredResults = facilities.filter((f) => {
+      const nameMatch = f.name?.toLowerCase().includes(search.toLowerCase()) || false;
+      const locationMatch = f.location?.toLowerCase().includes(search.toLowerCase()) || false;
+      
+      // CASE SAFETIES: Handles lowercase/uppercase discrepancies (e.g., 'Football' vs 'football')
+      const targetCategory = f.category || f.FacilityType || '';
+      const categoryMatch = selectedCategory === 'All' || 
+                            targetCategory.toLowerCase() === selectedCategory.toLowerCase();
+      
+      return (nameMatch || locationMatch) && categoryMatch;
+    });
 
-  // Sort logic (only if you are using sortByPrice)
-  if (sortByPrice === 'low-to-high') {
-    filteredResults.sort((a, b) => a.pricePerHour - b.pricePerHour);
-  } else if (sortByPrice === 'high-to-low') {
-    filteredResults.sort((a, b) => b.pricePerHour - a.pricePerHour);
-  }
+    // Sort logic 
+    if (sortByPrice === 'asc') {
+      filteredResults.sort((a, b) => (Number(a.price) || 0) - (Number(b.price) || 0)); 
+    } else if (sortByPrice === 'desc') {
+      filteredResults.sort((a, b) => (Number(b.price) || 0) - (Number(a.price) || 0));
+    }
 
-  setFiltered(filteredResults);
-}, [search, selectedCategory, sortByPrice, facilities]);
+    setFiltered(filteredResults);
+  }, [search, selectedCategory, sortByPrice, facilities]);
+
   const categories = ['All', 'Football', 'Cricket', 'Badminton', 'Swimming'];
 
   return (

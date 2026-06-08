@@ -112,7 +112,7 @@ const filteredFacilities = facilities.filter((facility) => {
                   href={`/facilities/${facility._id}`}
                   className="mt-6 w-full py-2 bg-emerald-500 text-slate-950 font-bold text-center rounded-xl hover:bg-emerald-400 transition"
                 >
-                  View Details
+                  Book Now
                 </Link>
               </div>
             ))}
