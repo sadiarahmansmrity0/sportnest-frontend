@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+
 export default function AllFacilitiesPage() {
   const [facilities, setFacilities] = useState([]);
 
@@ -23,12 +24,9 @@ export default function AllFacilitiesPage() {
               <h2 className="text-xl font-bold">{f.name}</h2>
               <p className="text-slate-400 text-sm">{f.location}</p>
               <p className="text-emerald-400 font-bold mt-2">${f.price}/hr</p>
-              <button className="w-full bg-emerald-500 text-black font-bold py-2 mt-4 rounded-lg">
-                Book Now
-              </button>
               <Link href={`/book/${f._id}`} className="block w-full text-center bg-emerald-500 text-black font-bold py-2 mt-4 rounded-lg">
-  Book Now
-</Link>
+                Book Now
+              </Link>
             </div>
           </div>
         ))}

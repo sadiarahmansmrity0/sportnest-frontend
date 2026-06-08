@@ -29,8 +29,25 @@ export default function FacilitiesPage() {
           targetArray = data.facilities;
         }
 
-        setFacilities(targetArray);
-        setFiltered(targetArray);
+        // FIX: Ensure every facility has a valid name and required fields
+        const validatedFacilities = targetArray.map(facility => ({
+          ...facility,
+          // Generate a default name if missing or empty
+          name: facility.name?.trim() || facility.title?.trim() || facility.arenaName?.trim() || 'Sports Arena',
+          // Ensure category exists
+          category: facility.category || facility.FacilityType || facility.sport || 'General',
+          // Ensure location exists
+          location: facility.location || facility.address || 'Location not specified',
+          // Ensure price exists
+          price: facility.price || facility.hourlyRate || facility.cost || 0,
+          // Ensure description exists
+          description: facility.description || facility.details || 'Premium sports facility with modern amenities',
+          // Ensure image exists
+          image: facility.image || facility.photoUrl || facility.images?.[0] || '/default-arena.jpg'
+        }));
+
+        setFacilities(validatedFacilities);
+        setFiltered(validatedFacilities);
         setLoading(false);
       })
       .catch((err) => {
@@ -46,11 +63,11 @@ export default function FacilitiesPage() {
       return;
     }
 
-    const filteredResults = facilities.filter((f) => {
+    let filteredResults = facilities.filter((f) => {
       const nameMatch = f.name?.toLowerCase().includes(search.toLowerCase()) || false;
       const locationMatch = f.location?.toLowerCase().includes(search.toLowerCase()) || false;
       
-      // CASE SAFETIES: Handles lowercase/uppercase discrepancies (e.g., 'Football' vs 'football')
+      // CASE SAFETIES: Handles lowercase/uppercase discrepancies
       const targetCategory = f.category || f.FacilityType || '';
       const categoryMatch = selectedCategory === 'All' || 
                             targetCategory.toLowerCase() === selectedCategory.toLowerCase();
@@ -58,11 +75,11 @@ export default function FacilitiesPage() {
       return (nameMatch || locationMatch) && categoryMatch;
     });
 
-    // Sort logic 
+    // Sort logic - create a new array to avoid mutating state
     if (sortByPrice === 'asc') {
-      filteredResults.sort((a, b) => (Number(a.price) || 0) - (Number(b.price) || 0)); 
+      filteredResults = [...filteredResults].sort((a, b) => (Number(a.price) || 0) - (Number(b.price) || 0)); 
     } else if (sortByPrice === 'desc') {
-      filteredResults.sort((a, b) => (Number(b.price) || 0) - (Number(a.price) || 0));
+      filteredResults = [...filteredResults].sort((a, b) => (Number(b.price) || 0) - (Number(a.price) || 0));
     }
 
     setFiltered(filteredResults);
@@ -143,7 +160,7 @@ export default function FacilitiesPage() {
           ) : filtered.length > 0 ? (
             filtered.map((item) => (
               <div 
-                key={item._id} 
+                key={item._id || item.id || Math.random()} 
                 className="group rounded-3xl bg-white/5 border border-white/10 backdrop-blur-md hover:border-emerald-500/40 hover:shadow-[0_0_40px_rgba(16,185,129,0.15)] transition-all duration-500 hover:-translate-y-1 overflow-hidden"
               >
                 <FacilityCard facility={item} />

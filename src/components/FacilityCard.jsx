@@ -11,7 +11,6 @@ export default function FacilityCard({ facility }) {
         <div className="relative overflow-hidden h-48 border-b border-slate-800">
           <img 
             src={imageSrc} 
-            // 🟢 CHANGED: Use .name instead of .title
             alt={facility?.name || "Sport Arena"} 
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />
@@ -22,13 +21,16 @@ export default function FacilityCard({ facility }) {
           <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] px-2.5 py-0.5 rounded-full uppercase tracking-wider font-semibold inline-block">
             {facility?.category || "Sports"}
           </span>
-          {/* 🟢 CHANGED: Changed facility.title to facility.name */}
-          <h3 className="text-lg font-bold text-white group-hover:text-emerald-400 transition-colors line-clamp-1">
-            {facility?.name || "Untitled Arena"}
-          </h3>
-          <p className="text-sm text-gray-400 line-clamp-2 leading-relaxed">
-            {facility?.description || "No description available for this playground."}
-          </p>
+         <h3 className="text-lg font-bold text-white group-hover:text-emerald-400 transition-colors line-clamp-1">
+  {facility?.name || "Untitled Arena"}
+</h3>
+{/* ADD THIS PRICE LINE */}
+<p className="text-emerald-400 font-bold text-xl">
+  ৳{facility?.pricePerHour || facility?.price || 0} <span className="text-xs text-slate-400">/hour</span>
+</p>
+<p className="text-sm text-gray-400 line-clamp-2 leading-relaxed">
+  {facility?.description || "No description available for this playground."}
+</p>
           <div className="text-xs text-gray-400 space-y-1 pt-1">
             <p>📍 {facility?.location || "Sylhet"}</p>
           </div>

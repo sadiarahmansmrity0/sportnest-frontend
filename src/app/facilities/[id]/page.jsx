@@ -13,197 +13,109 @@ import {
 import Link from "next/link";
 
 export default function FacilityDetailsPage() {
-
   const { id } = useParams();
-
   const router = useRouter();
 
   const [facility, setFacility] = useState(null);
-
   const [loading, setLoading] = useState(true);
 
   // BOOKING STATES
-  const [showBookingForm, setShowBookingForm] =
-    useState(false);
-
-  const [bookingDate, setBookingDate] =
-    useState("");
-
-  const [bookingSlot, setBookingSlot] =
-    useState("");
-
-  const [bookingStatus, setBookingStatus] =
-    useState("");
-
-  const [bookingLoading, setBookingLoading] =
-    useState(false);
+  const [showBookingForm, setShowBookingForm] = useState(false);
+  const [bookingDate, setBookingDate] = useState("");
+  const [bookingSlot, setBookingSlot] = useState("");
+  const [bookingStatus, setBookingStatus] = useState("");
+  const [bookingLoading, setBookingLoading] = useState(false);
 
   // =========================
   // FETCH FACILITY
   // =========================
   useEffect(() => {
-
     if (!id) return;
 
     async function fetchFacility() {
-
       try {
-
-        const res = await fetch(
-          `http://localhost:5000/api/facilities/${id}`
-        );
-
+        const res = await fetch(`http://localhost:5000/api/facilities/${id}`);
         const data = await res.json();
-
         console.log("FACILITY DATA:", data);
-
         setFacility(data.data || data);
-
       } catch (err) {
-
-        console.error(
-          "Failed to fetch facility:",
-          err
-        );
-
+        console.error("Failed to fetch facility:", err);
       } finally {
-
         setLoading(false);
       }
     }
 
     fetchFacility();
-
   }, [id]);
 
   // =========================
   // BOOKING FUNCTION
   // =========================
   const handleConfirmBooking = async () => {
-
-    // GET REAL USER EMAIL
-    const userEmail =
-      localStorage.getItem("userEmail");
-
+    const userEmail = localStorage.getItem("userEmail");
     console.log("CURRENT USER:", userEmail);
 
-    // CHECK LOGIN
     if (!userEmail) {
-
       alert("Please login first.");
-
       router.push("/login");
-
       return;
     }
 
-    // VALIDATION
     if (!bookingDate || !bookingSlot) {
-
-      alert(
-        "Please select both date and slot."
-      );
-
+      alert("Please select both date and slot.");
       return;
     }
 
     try {
-
       setBookingLoading(true);
-
       setBookingStatus("Processing booking...");
 
-      // FINAL BOOKING OBJECT
       const bookingData = {
-
         facilityId: facility._id,
-
-        facilityTitle:
-          facility.title || facility.name,
-
+        facilityTitle: facility.title || facility.name,
         userEmail: userEmail,
-
         date: bookingDate,
-
         slot: bookingSlot,
-
         status: "pending",
       };
 
-      console.log(
-        "FINAL BOOKING DATA:",
-        bookingData
-      );
+      console.log("FINAL BOOKING DATA:", bookingData);
 
-      const res = await fetch(
-        "http://localhost:5000/api/bookings",
-        {
-          method: "POST",
-
-          headers: {
-            "Content-Type":
-              "application/json",
-          },
-
-          body: JSON.stringify(
-            bookingData
-          ),
-        }
-      );
+      const res = await fetch("http://localhost:5000/api/bookings", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(bookingData),
+      });
 
       const data = await res.json();
-
-      console.log(
-        "BOOKING RESPONSE:",
-        data
-      );
+      console.log("BOOKING RESPONSE:", data);
 
       if (data.success) {
-
-        setBookingStatus(
-          "Booking Confirmed ✅"
-        );
-
-        // RESET FORM
+        setBookingStatus("Booking Confirmed ✅");
         setBookingDate("");
         setBookingSlot("");
 
-        // CLOSE FORM AFTER SUCCESS
         setTimeout(() => {
-
           setShowBookingForm(false);
-
           router.push("/dashboard");
-
         }, 1200);
-
       } else {
-
-        setBookingStatus(
-          data.message ||
-            "Booking failed"
-        );
+        setBookingStatus(data.message || "Booking failed");
       }
-
     } catch (err) {
-
       console.error(err);
-
-      setBookingStatus(
-        "Server connection failed."
-      );
-
+      setBookingStatus("Server connection failed.");
     } finally {
-
       setBookingLoading(false);
     }
   };
 
   // =========================
-  // LOADING STATE
+  // SAFETY GATE CONDITIONAL RENDERS
   // =========================
   if (loading) {
-
     return (
       <div className="min-h-screen bg-[#020617] text-white flex items-center justify-center">
         Loading facility details...
@@ -211,11 +123,7 @@ export default function FacilityDetailsPage() {
     );
   }
 
-  // =========================
-  // NO FACILITY FOUND
-  // =========================
   if (!facility) {
-
     return (
       <div className="min-h-screen bg-[#020617] text-white flex items-center justify-center">
         Facility not found.
@@ -223,11 +131,13 @@ export default function FacilityDetailsPage() {
     );
   }
 
+  // CRITICAL FIX: Safe variable assignment after checking that facility is loaded and exists
+  const price = facility.pricePerHour || facility.price || 0;
+
   return (
     <div className="bg-[#020617] text-white min-h-screen pt-24 px-6 pb-20">
-
       <div className="max-w-5xl mx-auto">
-
+        
         {/* BACK BUTTON */}
         <Link
           href="/"
@@ -237,180 +147,121 @@ export default function FacilityDetailsPage() {
           Back to Home
         </Link>
 
-        {/* CARD */}
+        {/* MAIN CONTAINER */}
         <div className="bg-slate-900/50 border border-white/10 rounded-3xl overflow-hidden shadow-2xl">
-
+          
           {/* IMAGE */}
           <img
-            src={
-              facility.image ||
-              "https://images.unsplash.com/photo-1547347298-4074fc3086f0?w=1200"
-            }
-            alt={
-              facility.title ||
-              facility.name
-            }
+            src={facility.image || "https://images.unsplash.com/photo-1547347298-4074fc3086f0?w=1200"}
+            alt={facility.title || facility.name}
             className="w-full h-[350px] object-cover"
           />
 
-          {/* CONTENT */}
+          {/* CONTENT CARD */}
           <div className="p-8">
+            <h1 className="text-4xl font-black">{facility.title || facility.name}</h1>
 
-            {/* TITLE */}
-            <h1 className="text-4xl font-black">
-              {facility.title ||
-                facility.name}
-            </h1>
-
-            {/* LOCATION */}
             <div className="flex items-center text-slate-400 mt-3 mb-8">
-
               <MapPin className="h-4 w-4 mr-2 text-emerald-400" />
-
-              {facility.location ||
-                "Location unavailable"}
+              {facility.location || "Location unavailable"}
             </div>
 
-            {/* ABOUT */}
             <div className="mb-8">
-
               <h3 className="font-bold text-lg flex items-center mb-3">
-
                 <Info className="h-5 w-5 mr-2 text-emerald-500" />
-
                 About Facility
               </h3>
-
               <p className="text-slate-400 leading-relaxed">
-
-                {facility.description ||
-                  "No description available."}
+                {facility.description || "No description available."}
               </p>
             </div>
 
-            {/* BOOK BUTTON */}
-            {!showBookingForm ? (
+            {/* PRICE COMPONENT */}
+            <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-5 mb-6">
+              <div className="flex items-baseline gap-2">
+                <span className="text-3xl md:text-4xl font-bold text-emerald-400">
+                  ৳{price}
+                </span>
+                <span className="text-slate-400 text-lg">/ hour</span>
+              </div>
+              <p className="text-slate-400 text-sm mt-1">Premium rate for standard booking</p>
+            </div>
 
+            {/* ACTION FOOTER PANEL */}
+            {!showBookingForm ? (
               <button
-                onClick={() =>
-                  setShowBookingForm(true)
-                }
+                onClick={() => setShowBookingForm(true)}
                 className="w-full py-4 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-2xl transition-all"
               >
                 Reserve This Arena
               </button>
-
             ) : (
+              <div className="bg-slate-950 border border-emerald-500/20 rounded-2xl p-6 mt-4 space-y-4">
+                <h3 className="text-xl font-bold mb-2">Complete Your Booking</h3>
 
-              <div className="bg-slate-950 border border-emerald-500/20 rounded-2xl p-6 mt-4">
-
-                <h3 className="text-xl font-bold mb-6">
-                  Complete Your Booking
-                </h3>
-
-                {/* DATE */}
-                <div className="mb-4">
-
-                  <label className="text-sm text-slate-300 mb-2 flex items-center">
-
-                    <Calendar className="h-4 w-4 mr-2 text-emerald-400" />
-
+                {/* DATE SELECTOR */}
+                <div>
+                  <label className="text-sm text-slate-300 mb-2 flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-emerald-400" />
                     Select Date
                   </label>
-
                   <input
                     type="date"
                     value={bookingDate}
-                    min={
-                      new Date()
-                        .toISOString()
-                        .split("T")[0]
-                    }
-                    onChange={(e) =>
-                      setBookingDate(
-                        e.target.value
-                      )
-                    }
+                    min={new Date().toISOString().split("T")[0]}
+                    onChange={(e) => setBookingDate(e.target.value)}
                     className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500"
                   />
                 </div>
 
-                {/* SLOT */}
-                <div className="mb-6">
-
-                  <label className="text-sm text-slate-300 mb-2 flex items-center">
-
-                    <Clock className="h-4 w-4 mr-2 text-emerald-400" />
-
-                    Select Time Slot
+                {/* TIMEFRAME SELECTOR */}
+                <div>
+                  <label className="text-sm text-slate-300 mb-2 flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-emerald-400" />
+                    Select Slot Time
                   </label>
-
                   <select
                     value={bookingSlot}
-                    onChange={(e) =>
-                      setBookingSlot(
-                        e.target.value
-                      )
-                    }
-                    className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500"
+                    onChange={(e) => setBookingSlot(e.target.value)}
+                    className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500 cursor-pointer"
                   >
-                    <option value="">
-                      Choose a slot
-                    </option>
-
-                    <option value="06:00 PM - 07:30 PM">
-                      06:00 PM - 07:30 PM
-                    </option>
-
-                    <option value="08:00 PM - 09:30 PM">
-                      08:00 PM - 09:30 PM
-                    </option>
-
-                    <option value="10:00 PM - 11:30 PM">
-                      10:00 PM - 11:30 PM
-                    </option>
-
+                    <option value="">Choose an open time frame...</option>
+                    <option value="06:00 PM - 07:30 PM">06:00 PM - 07:30 PM</option>
+                    <option value="07:30 PM - 09:00 PM">07:30 PM - 09:00 PM</option>
+                    <option value="09:00 PM - 10:30 PM">09:00 PM - 10:30 PM</option>
                   </select>
                 </div>
 
-                {/* STATUS */}
+                {/* STATUS BAR MESSAGE CONTAINER */}
                 {bookingStatus && (
-
-                  <div className="mb-4 text-sm text-emerald-400">
+                  <div className="text-sm font-semibold text-center py-2 text-emerald-400 bg-emerald-500/5 rounded-xl border border-emerald-500/10 animate-pulse">
                     {bookingStatus}
                   </div>
-
                 )}
 
-                {/* BUTTONS */}
-                <div className="flex gap-3">
-
+                {/* INTERACTIVE CONTROLS */}
+                <div className="flex gap-3 pt-2">
                   <button
-                    onClick={() =>
-                      setShowBookingForm(false)
-                    }
-                    className="flex-1 py-3 bg-slate-800 hover:bg-slate-700 rounded-xl font-medium transition"
+                    onClick={() => {
+                      setShowBookingForm(false);
+                      setBookingStatus("");
+                    }}
+                    disabled={bookingLoading}
+                    className="w-1/2 bg-white/5 hover:bg-white/10 rounded-xl py-3 text-sm font-bold transition disabled:opacity-50"
                   >
                     Cancel
                   </button>
-
                   <button
-                    onClick={
-                      handleConfirmBooking
-                    }
+                    onClick={handleConfirmBooking}
                     disabled={bookingLoading}
-                    className="flex-1 py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-xl transition"
+                    className="w-1/2 bg-emerald-500 hover:bg-emerald-600 text-slate-950 rounded-xl py-3 text-sm font-black transition disabled:opacity-50"
                   >
-                    {bookingLoading
-                      ? "Booking..."
-                      : "Confirm Booking"}
+                    {bookingLoading ? "Processing..." : "Confirm Booking"}
                   </button>
-
                 </div>
-
               </div>
-
             )}
+
           </div>
         </div>
       </div>
