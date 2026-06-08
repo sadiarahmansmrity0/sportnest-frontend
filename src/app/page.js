@@ -37,20 +37,16 @@ export default function HomePage() {
   }, []);
 
   // 2. Robust Filtering Logic
-  const filteredFacilities = facilities.filter((facility) => {
-    // Provide defaults for missing fields to avoid crashes
-    const title = (facility.title || "").toLowerCase();
-    const category = (facility.category || "").toLowerCase();
+ // Inside your HomePage, update the filter logic:
+const filteredFacilities = facilities.filter((facility) => {
+    const name = (facility.name || facility.title || "").toLowerCase();
     const location = (facility.location || "").toLowerCase();
     const query = searchQuery.toLowerCase();
     const locFilter = selectedLocation.toLowerCase();
 
-    const matchesSearch = title.includes(query) || category.includes(query);
-    const matchesLocation = selectedLocation === "" || location.includes(locFilter);
-
-    return matchesSearch && matchesLocation;
-  });
-
+    return (name.includes(query) || (facility.category || "").toLowerCase().includes(query)) 
+           && (selectedLocation === "" || location.includes(locFilter));
+});
   // 3. Unique Location Extraction
   const uniqueLocations = [...new Set(facilities.map((f) => f.location).filter(Boolean))];
 

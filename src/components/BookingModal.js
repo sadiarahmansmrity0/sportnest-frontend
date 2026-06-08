@@ -1,129 +1,232 @@
-import { useState } from 'react';
+import { useState } from "react";
 
-export default function BookingModal({ facility, onClose, userEmail }) {
-  const [selectedDate, setSelectedDate] = useState('');
-  const [selectedSlot, setSelectedSlot] = useState('');
+export default function BookingModal({
+  facility,
+  onClose,
+}) {
+
+  const [selectedDate, setSelectedDate] = useState("");
+  const [selectedSlot, setSelectedSlot] = useState("");
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState({ type: '', text: '' });
+
+  const [message, setMessage] = useState({
+    type: "",
+    text: "",
+  });
 
   const handleBookingSubmit = async (e) => {
+
     e.preventDefault();
-    if (!selectedDate || !selectedSlot) {
-      setMessage({ type: 'error', text: 'Please choose both a date and a time slot.' });
+
+    // GET REAL USER EMAIL
+    const userEmail = localStorage.getItem("userEmail");
+
+    console.log("BOOKING USER EMAIL:", userEmail);
+
+    if (!userEmail) {
+      setMessage({
+        type: "error",
+        text: "Please login first.",
+      });
       return;
     }
 
-    setLoading(true);
-    setMessage({ type: '', text: '' });
+    if (!selectedDate || !selectedSlot) {
+      setMessage({
+        type: "error",
+        text: "Please choose date and slot.",
+      });
+      return;
+    }
 
     try {
-      const response = await fetch('http://localhost:5000/api/bookings', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          facilityId: facility._id,
-          facilityTitle: facility.title,
-          userEmail: userEmail || 'testuser@gmail.com', // Fallback for testing
-          date: selectedDate,
-          slot: selectedSlot,
-        }),
-      });
+
+      setLoading(true);
+
+      const bookingData = {
+        facilityId: facility._id,
+
+        facilityTitle:
+          facility.title || facility.name,
+
+        userEmail: userEmail,
+
+        date: selectedDate,
+
+        slot: selectedSlot,
+
+        status: "pending",
+      };
+
+      console.log("FINAL BOOKING DATA:", bookingData);
+
+      const response = await fetch(
+        "http://localhost:5000/api/bookings",
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type": "application/json",
+          },
+
+          body: JSON.stringify(bookingData),
+        }
+      );
 
       const data = await response.json();
 
+      console.log("BOOKING RESPONSE:", data);
+
       if (data.success) {
-        setMessage({ type: 'success', text: 'Booking requested successfully!' });
+
+        setMessage({
+          type: "success",
+          text: "Booking successful!",
+        });
+
         setTimeout(() => {
-          onClose(); // Close modal after success
-        }, 2000);
+          onClose();
+        }, 1500);
+
       } else {
-        setMessage({ type: 'error', text: data.message || 'Something went wrong.' });
+
+        setMessage({
+          type: "error",
+          text: data.message || "Booking failed",
+        });
       }
+
     } catch (error) {
-      setMessage({ type: 'error', text: 'Failed to connect to the booking server.' });
+
+      console.error(error);
+
+      setMessage({
+        type: "error",
+        text: "Server connection failed.",
+      });
+
     } finally {
+
       setLoading(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-150">
-        
-        {/* Modal Header */}
-        <div className="p-6 border-b border-slate-800 flex justify-between items-center">
+    <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+
+      <div className="bg-slate-900 border border-white/10 rounded-2xl w-full max-w-md overflow-hidden">
+
+        {/* HEADER */}
+        <div className="p-6 border-b border-white/10 flex items-center justify-between">
+
           <div>
-            <h3 className="text-xl font-bold text-white">Book a Field</h3>
-            <p className="text-sm text-emerald-400 mt-1">{facility.title}</p>
+            <h2 className="text-2xl font-black text-white">
+              Book Facility
+            </h2>
+
+            <p className="text-emerald-400 text-sm mt-1">
+              {facility.title || facility.name}
+            </p>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors text-xl">
-            &times;
+
+          <button
+            onClick={onClose}
+            className="text-slate-400 hover:text-white text-2xl"
+          >
+            ×
           </button>
+
         </div>
 
-        {/* Modal Body / Form */}
-        <form onSubmit={handleBookingSubmit} className="p-6 space-y-5">
+        {/* BODY */}
+        <form
+          onSubmit={handleBookingSubmit}
+          className="p-6 space-y-5"
+        >
+
           {message.text && (
-            <div className={`p-3 rounded-lg text-sm ${
-              message.type === 'success' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
-            }`}>
+            <div
+              className={`p-3 rounded-xl text-sm ${
+                message.type === "success"
+                  ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                  : "bg-red-500/10 text-red-400 border border-red-500/20"
+              }`}
+            >
               {message.text}
             </div>
           )}
 
-          {/* Date Picker Input */}
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-300">Select Date</label>
+          {/* DATE */}
+          <div>
+            <label className="block text-sm mb-2 text-slate-300">
+              Select Date
+            </label>
+
             <input
               type="date"
               required
-              min={new Date().toISOString().split('T')[0]} // Block past dates
+              min={new Date().toISOString().split("T")[0]}
               value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500 transition-colors"
+              onChange={(e) =>
+                setSelectedDate(e.target.value)
+              }
+              className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-white"
             />
           </div>
 
-          {/* Time Slots Grid Selection */}
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-300">Available Slots</label>
-            <div className="grid grid-cols-1 gap-2 max-h-40 overflow-y-auto pr-1">
-              {facility.availableSlots && facility.availableSlots.map((slot, index) => (
-  <button
-    key={index}
-    type="button"
-    onClick={() => setSelectedSlot(slot)}
-    className={`w-full text-left px-4 py-3 rounded-xl border text-sm transition-all ${
-      selectedSlot === slot
-        ? 'bg-emerald-500 border-emerald-500 text-slate-950 font-semibold shadow-lg shadow-emerald-500/20'
-        : 'bg-slate-950 border-slate-800 text-gray-300 hover:border-slate-700'
-    }`}
-  >
-    {slot}
-  </button>
-))}
-</div>
+          {/* SLOT */}
+          <div>
+            <label className="block text-sm mb-2 text-slate-300">
+              Select Time Slot
+            </label>
+
+            <div className="grid gap-2 max-h-44 overflow-y-auto">
+
+              {facility.availableSlots?.map((slot, index) => (
+
+                <button
+                  key={index}
+                  type="button"
+                  onClick={() =>
+                    setSelectedSlot(slot)
+                  }
+                  className={`px-4 py-3 rounded-xl border text-left transition ${
+                    selectedSlot === slot
+                      ? "bg-emerald-500 text-slate-950 border-emerald-500 font-bold"
+                      : "bg-slate-950 border-white/10 text-slate-300"
+                  }`}
+                >
+                  {slot}
+                </button>
+
+              ))}
+
+            </div>
           </div>
 
-          {/* Action Action Buttons */}
-          <div className="flex space-x-3 pt-2">
+          {/* BUTTONS */}
+          <div className="flex gap-3 pt-2">
+
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 bg-slate-800 hover:bg-slate-700 text-white font-medium py-3 rounded-xl transition-colors"
+              className="flex-1 bg-slate-800 hover:bg-slate-700 text-white py-3 rounded-xl"
             >
               Cancel
             </button>
+
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 bg-emerald-500 hover:bg-emerald-400 disabled:bg-emerald-700 disabled:text-slate-400 text-slate-950 font-semibold py-3 rounded-xl transition-all shadow-lg shadow-emerald-500/10"
+              className="flex-1 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-3 rounded-xl"
             >
-              {loading ? 'Processing...' : 'Confirm Booking'}
+              {loading
+                ? "Processing..."
+                : "Confirm Booking"}
             </button>
+
           </div>
+
         </form>
       </div>
     </div>

@@ -4,25 +4,78 @@ import PrivateRoute from "@/components/PrivateRoute";
 
 function ManageFacilities() {
   const [facilities, setFacilities] = useState([]);
-  const userEmail = typeof window !== "undefined" ? localStorage.getItem("userEmail") : "";
+  const [editingId, setEditingId] = useState(null);
+  const [editForm, setEditForm] = useState({});
+  const [userEmail, setUserEmail] = useState("");
 
+  // Set email from localStorage safely
+  useEffect(() => {
+    setUserEmail(localStorage.getItem("userEmail") || "");
+  }, []);
+
+  // Fetch facilities for this specific owner
   useEffect(() => {
     async function fetchMyFacilities() {
       if (!userEmail) return;
-      const res = await fetch(`http://localhost:5000/api/facilities?ownerEmail=${userEmail}`);
-      const result = await res.json();
-      if (result.success) setFacilities(result.data);
+      try {
+        const res = await fetch(`http://localhost:5000/api/facilities?ownerEmail=${userEmail}`);
+        const result = await res.json();
+        if (result.success) setFacilities(result.data);
+      } catch (err) {
+        console.error("Fetch error:", err);
+      }
     }
     fetchMyFacilities();
   }, [userEmail]);
 
-  const handleDelete = async (id) => {
-    if (!confirm("Are you sure you want to delete this facility?")) return;
-    const res = await fetch(`http://localhost:5000/api/facilities/${id}`, { method: 'DELETE' });
-    if (res.ok) {
-        setFacilities(facilities.filter(f => f._id !== id));
-    }
+  const handleEditClick = (facility) => {
+    setEditingId(facility._id);
+    setEditForm(facility);
   };
+
+  const handleSave = async (id) => {
+    // 1. Create a copy of the editForm
+    const { _id, ...dataToUpdate } = editForm; // This removes _id from the data
+
+    try {
+        const res = await fetch(`http://localhost:5000/api/facilities/${id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(dataToUpdate), // Send the cleaned data
+        });
+
+        const result = await res.json();
+
+        if (res.ok && result.success) {
+            setFacilities(facilities.map(f => f._id === id ? { ...f, ...dataToUpdate } : f));
+            setEditingId(null);
+        } else {
+            alert("Update failed: " + (result.message || "Unknown error"));
+        }
+    } catch (err) {
+        console.error("Save error:", err);
+    }
+};
+
+ const handleDelete = async (id) => {
+    if (!confirm("Are you sure you want to delete this facility?")) return;
+    
+    try {
+        const res = await fetch(`http://localhost:5000/api/facilities/${id}`, { 
+            method: 'DELETE' 
+        });
+        const result = await res.json();
+        
+        if (result.success) {
+            // Remove the item from the local state so it disappears from the UI immediately
+            setFacilities(facilities.filter(f => f._id !== id));
+        } else {
+            alert("Failed to delete from database: " + result.message);
+        }
+    } catch (err) {
+        console.error("Delete error:", err);
+    }
+};
 
   return (
     <div className="min-h-screen bg-[#020617] text-white pt-28 px-6">
@@ -30,12 +83,22 @@ function ManageFacilities() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {facilities.map((f) => (
           <div key={f._id} className="bg-slate-900 p-6 rounded-2xl border border-white/10">
-            <h3 className="font-bold text-xl">{f.name}</h3>
-            <p className="text-slate-400 mb-4">{f.location}</p>
-            <div className="flex gap-2">
-              <button className="bg-blue-600 px-4 py-2 rounded">Edit</button>
-              <button onClick={() => handleDelete(f._id)} className="bg-red-600 px-4 py-2 rounded">Delete</button>
-            </div>
+            {editingId === f._id ? (
+              <div className="space-y-2">
+                <input value={editForm.name} onChange={(e) => setEditForm({...editForm, name: e.target.value})} className="text-black w-full p-1 rounded" />
+                <button onClick={() => handleSave(f._id)} className="bg-green-600 px-4 py-1 mr-2 rounded">Save</button>
+                <button onClick={() => setEditingId(null)} className="bg-gray-600 px-4 py-1 rounded">Cancel</button>
+              </div>
+            ) : (
+              <>
+                <h3 className="font-bold text-xl">{f.name}</h3>
+                <p className="text-slate-400 mb-4">{f.location}</p>
+                <div className="flex gap-2">
+                  <button onClick={() => handleEditClick(f)} className="bg-blue-600 px-4 py-2 rounded">Edit</button>
+                  <button onClick={() => handleDelete(f._id)} className="bg-red-600 px-4 py-2 rounded">Delete</button>
+                </div>
+              </>
+            )}
           </div>
         ))}
       </div>
