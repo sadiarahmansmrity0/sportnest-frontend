@@ -58,7 +58,26 @@ export default function DashboardPage() {
       </div>
     );
   }
+const handleDelete = async (id) => {
+  if (!confirm("Are you sure you want to cancel this booking?")) return;
 
+  try {
+    const res = await fetch(`http://localhost:5000/api/bookings/${id}`, {
+      method: 'DELETE',
+    });
+    const result = await res.json();
+    
+    if (result.success) {
+      // This line removes the item from the local state immediately
+      setBookings(prevBookings => prevBookings.filter(b => b._id !== id));
+      alert("Booking cancelled!");
+    } else {
+      alert("Failed to cancel: " + result.message);
+    }
+  } catch (err) {
+    console.error("Delete error:", err);
+  }
+};
   return (
     <div className="min-h-screen bg-[#020617] text-white pt-24 px-6">
       <div className="max-w-5xl mx-auto">
@@ -72,20 +91,29 @@ export default function DashboardPage() {
         ) : (
           <div className="grid gap-5">
             {bookings.map((booking) => (
-              <div
-                key={booking._id}
-                className="bg-slate-900 border border-white/10 rounded-2xl p-6 flex items-center justify-between"
-              >
-                <div>
-                  <h2 className="text-xl font-bold">{booking.facilityTitle || "Unnamed Facility"}</h2>
-                  <p className="text-slate-400 mt-2">📅 {booking.date || "No date set"}</p>
-                  <p className="text-slate-500 text-sm mt-1">⏰ {booking.slot || "No slot set"}</p>
-                </div>
-                <div className="bg-emerald-500/20 text-emerald-400 px-4 py-2 rounded-full text-sm font-bold uppercase">
-                  {booking.status || "Pending"}
-                </div>
-              </div>
-            ))}
+  <div
+    key={booking._id}
+    className="bg-slate-900 border border-white/10 rounded-2xl p-6 flex items-center justify-between"
+  >
+    <div>
+      <h2 className="text-xl font-bold">{booking.facilityTitle || "Unnamed Facility"}</h2>
+      <p className="text-slate-400 mt-2">📅 {booking.date || "No date set"}</p>
+      <p className="text-slate-500 text-sm mt-1">⏰ {booking.slot || "No slot set"}</p>
+      
+      {/* ADD THIS BUTTON HERE */}
+      <button 
+        onClick={() => handleDelete(booking._id)}
+        className="mt-4 bg-red-500/10 text-red-400 px-4 py-2 rounded-lg text-sm font-bold hover:bg-red-500/20 transition"
+      >
+        Cancel Booking
+      </button>
+    </div>
+    
+    <div className="bg-emerald-500/20 text-emerald-400 px-4 py-2 rounded-full text-sm font-bold uppercase">
+      {booking.status || "Pending"}
+    </div>
+  </div>
+))}
           </div>
         )}
       </div>
