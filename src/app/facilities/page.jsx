@@ -1,25 +1,31 @@
 "use client";
-import { API_URL } from "@/lib/api";
+
 import { useState, useEffect } from 'react';
 import FacilityCard from '@/components/FacilityCard';
 
-export default function FacilitiesPage() {
+export default function AllFacilitiesPage() {
   const [facilities, setFacilities] = useState([]);
   const [filtered, setFiltered] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   
   // Filtering & Sorting State
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
-  const [sortByPrice, setSortByPrice] = useState('none'); // 'none' | 'asc' | 'desc'
+  const [sortByPrice, setSortByPrice] = useState('none');
 
   useEffect(() => {
-    fetch('${API_URL/api/facilities')
-      .then((res) => res.json())
+    // Use direct URL instead of API_URL
+    fetch('http://localhost:5000/api/facilities')
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        return res.json();
+      })
       .then((data) => {
-        console.log("DEBUG: Facilities Raw API Data Received:", data);
+        console.log("DEBUG: Catalog Loaded:", data);
         
-        // CRITICAL FIX: Matches your backend's res.json({ success: true, data: facilities })
         let targetArray = [];
         if (data && Array.isArray(data.data)) {
           targetArray = data.data;
@@ -29,34 +35,27 @@ export default function FacilitiesPage() {
           targetArray = data.facilities;
         }
 
-        // FIX: Ensure every facility has a valid name and required fields
-        const validatedFacilities = targetArray.map(facility => ({
-          ...facility,
-          // Generate a default name if missing or empty
-          name: facility.name?.trim() || facility.title?.trim() || facility.arenaName?.trim() || 'Sports Arena',
-          // Ensure category exists
-          category: facility.category || facility.FacilityType || facility.sport || 'General',
-          // Ensure location exists
-          location: facility.location || facility.address || 'Location not specified',
-          // Ensure price exists
-          price: facility.price || facility.hourlyRate || facility.cost || 0,
-          // Ensure description exists
-          description: facility.description || facility.details || 'Premium sports facility with modern amenities',
-          // Ensure image exists
-          image: facility.image || facility.photoUrl || facility.images?.[0] || '/default-arena.jpg'
+        const validated = targetArray.map(f => ({
+          ...f,
+          name: f.name?.trim() || f.title?.trim() || 'Sports Arena',
+          category: f.category || f.FacilityType || 'General',
+          location: f.location || 'Location not specified',
+          price: f.price || f.pricePerHour || 0,
+          description: f.description || 'Premium sports facility',
+          image: f.image || '/default-arena.jpg'
         }));
 
-        setFacilities(validatedFacilities);
-        setFiltered(validatedFacilities);
+        setFacilities(validated);
+        setFiltered(validated);
         setLoading(false);
       })
       .catch((err) => {
-        console.error("Error fetching facilities catalog:", err);
+        console.error("Catalog connection error:", err);
+        setError(err.message);
         setLoading(false);
       });
   }, []);
 
-  // Compute Filtering & Sorting instantly on state change
   useEffect(() => {
     if (!facilities || facilities.length === 0) {
       setFiltered([]);
@@ -66,16 +65,11 @@ export default function FacilitiesPage() {
     let filteredResults = facilities.filter((f) => {
       const nameMatch = f.name?.toLowerCase().includes(search.toLowerCase()) || false;
       const locationMatch = f.location?.toLowerCase().includes(search.toLowerCase()) || false;
-      
-      // CASE SAFETIES: Handles lowercase/uppercase discrepancies
-      const targetCategory = f.category || f.FacilityType || '';
-      const categoryMatch = selectedCategory === 'All' || 
-                            targetCategory.toLowerCase() === selectedCategory.toLowerCase();
+      const categoryMatch = selectedCategory === 'All' || f.category.toLowerCase() === selectedCategory.toLowerCase();
       
       return (nameMatch || locationMatch) && categoryMatch;
     });
 
-    // Sort logic - create a new array to avoid mutating state
     if (sortByPrice === 'asc') {
       filteredResults = [...filteredResults].sort((a, b) => (Number(a.price) || 0) - (Number(b.price) || 0)); 
     } else if (sortByPrice === 'desc') {
@@ -87,20 +81,37 @@ export default function FacilitiesPage() {
 
   const categories = ['All', 'Football', 'Cricket', 'Badminton', 'Swimming'];
 
+  // Show error message if backend is not connected
+  if (error) {
+    return (
+      <div className="min-h-screen bg-[#020617] text-slate-100 pt-28 pb-20 antialiased">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-8 text-center">
+            <h2 className="text-xl font-bold text-red-400 mb-2">Connection Error</h2>
+            <p className="text-slate-300">Failed to connect to backend server.</p>
+            <p className="text-slate-400 text-sm mt-2">Make sure your backend is running on http://localhost:5000</p>
+            <button 
+              onClick={() => window.location.reload()} 
+              className="mt-4 px-4 py-2 bg-emerald-500 text-slate-950 rounded-lg font-semibold"
+            >
+              Retry Connection
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#020617] text-slate-100 pt-28 pb-20 antialiased">
       <div className="max-w-7xl mx-auto px-6">
         
-        {/* Header Section */}
         <div className="mb-12 space-y-2">
           <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-white">Explore Arenas</h1>
           <p className="text-sm text-slate-400">Discover top tier playing grounds near your coordinates and secure active slots.</p>
         </div>
 
-        {/* Filters Controls Panel */}
         <div className="bg-white/5 border border-white/10 backdrop-blur-xl p-5 rounded-2xl flex flex-col lg:flex-row gap-4 items-center justify-between mb-10 shadow-xl">
-          
-          {/* Search Box Input */}
           <div className="relative w-full lg:max-w-xs">
             <input 
               type="text" 
@@ -111,7 +122,6 @@ export default function FacilitiesPage() {
             />
           </div>
 
-          {/* Category Quick Tags */}
           <div className="flex flex-wrap gap-2 w-full lg:w-auto items-center">
             {categories.map((cat) => (
               <button
@@ -128,7 +138,6 @@ export default function FacilitiesPage() {
             ))}
           </div>
 
-          {/* Sorting Dropdown Selection Menu */}
           <div className="w-full lg:w-auto flex items-center gap-3">
             <span className="text-xs font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">Sort By:</span>
             <select
@@ -141,10 +150,8 @@ export default function FacilitiesPage() {
               <option value="desc">Price: High to Low</option>
             </select>
           </div>
-
         </div>
 
-        {/* Cards Grid Space */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {loading ? (
             [1, 2, 3, 4, 5, 6].map((n) => (

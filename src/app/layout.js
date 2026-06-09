@@ -1,20 +1,18 @@
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
-import "@/app/globals.css"; // Ensure your global styles stay imported!
+'use client';
 
-export const metadata = {
-  title: "SportNest | Sports Facility Booking Portal",
-  description: "Reserve premium football turfs, badminton courts, and matching play slots instantly.",
-};
+import { GoogleOAuthProvider } from '@react-oauth/google';
+import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
+import './globals.css';
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body className="bg-[#020617] min-h-screen flex flex-col justify-between">
-        <Navbar />
-        <main className="flex-grow">
+      <body>
+        <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID}>
+          <Navbar />
           {children}
-        </main>
+        </GoogleOAuthProvider>
         <Footer />
       </body>
     </html>

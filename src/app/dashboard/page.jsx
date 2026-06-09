@@ -9,38 +9,19 @@ export default function DashboardPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    async function fetchBookings() {
-      if (typeof window === "undefined") return;
+  if (typeof window === "undefined") return;
 
-      const userEmail = localStorage.getItem("userEmail");
-      
-      if (!userEmail) {
-        setError("No user email found in storage. Please log in.");
-        setLoading(false);
-        return;
-      }
+  // Read URL parameters (e.g., ?email=user@gmail.com)
+  const queryParams = new URLSearchParams(window.location.search);
+  const emailFromGoogle = queryParams.get("email");
 
-      try {
-        // FIXED: Used ${API_URL} here
-        const url = `${API_URL}/api/bookings?userEmail=${encodeURIComponent(userEmail)}`;
-        const res = await fetch(url);
-        const json = await res.json();
-        
-        if (json && Array.isArray(json)) {
-          setBookings(json);
-        } else {
-          setBookings([]);
-        }
-      } catch (err) {
-        console.error("DASHBOARD FETCH ERROR:", err);
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    }
-    
-    fetchBookings();
-  }, []);
+  if (emailFromGoogle) {
+    // Save to local storage dynamically so your session updates instantly
+    localStorage.setItem("userEmail", decodeURIComponent(emailFromGoogle));
+    console.log("Google user session stored securely:", emailFromGoogle);
+  }
+}, []);
+
 
   const handleDelete = async (id) => {
     if (!confirm("Are you sure you want to cancel this booking?")) return;

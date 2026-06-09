@@ -1,7 +1,7 @@
 "use client";
-
+import { API_URL } from "@/lib/api";
 import { useState } from "react";
-import Link from "next/link"; // ✅ Fixed path from 'next/js'
+import Link from "next/link"; 
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import { Trophy, Eye, EyeOff, Mail, Lock, User, Image } from "lucide-react";
@@ -42,8 +42,8 @@ export default function RegisterPage() {
 
     setLoading(true);
     try {
-      // ✅ ACTIVE DATABASE LOOPWAY CONNECTOR
-      const response = await fetch("${API_URL}/api/auth/register", {
+      // FIXED: Swapped out double quotes for backticks to resolve the string template literal
+      const response = await fetch(`${API_URL}/api/auth/register`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -54,7 +54,6 @@ export default function RegisterPage() {
       const data = await response.json();
 
       if (data.success || response.ok) {
-        // Automatically link the session local client record
         localStorage.setItem("userEmail", email);
         toast.success("Registration successful! Forwarding to account portal...");
         

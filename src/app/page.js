@@ -1,25 +1,24 @@
 "use client";
-import { API_URL } from "@/lib/api";
+
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Search, MapPin, Activity, Sparkles } from "lucide-react";
-import FacilityCard from "@/components/FacilityCard";
-
+import { Search, MapPin, Activity, ChevronRight, Sparkles, ShieldCheck, Star, Users } from "lucide-react";
+import { API_URL } from "../lib/api";
 export default function HomePage() {
   const [facilities, setFacilities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedLocation, setSelectedLocation] = useState("");
 
-  // Data Fetching
+  // 1. Data Fetching
   useEffect(() => {
     async function fetchFacilities() {
       try {
         setLoading(true);
-        const response = await fetch("${API_URL/api/facilities");
+        const response = await fetch("http://localhost:5000/api/facilities");
         const data = await response.json();
 
-        // Safely extract the array
+        // Safely extract the array regardless of object structure
         if (data && Array.isArray(data.data)) {
           setFacilities(data.data);
         } else if (Array.isArray(data)) {
@@ -37,18 +36,18 @@ export default function HomePage() {
     fetchFacilities();
   }, []);
 
-  // Filtering Logic - FIXED to use 'title' instead of 'name'
+  // 2. Robust Filtering Logic
   const filteredFacilities = facilities.filter((facility) => {
-    const title = (facility.title || "").toLowerCase();
+    const name = (facility.name || facility.title || "").toLowerCase();
     const location = (facility.location || "").toLowerCase();
     const query = searchQuery.toLowerCase();
     const locFilter = selectedLocation.toLowerCase();
 
-    return (title.includes(query) || (facility.category || "").toLowerCase().includes(query)) 
+    return (name.includes(query) || (facility.category || "").toLowerCase().includes(query)) 
            && (selectedLocation === "" || location.includes(locFilter));
   });
-
-  // Unique Locations
+  
+  // 3. Unique Location Extraction
   const uniqueLocations = [...new Set(facilities.map((f) => f.location).filter(Boolean))];
 
   return (
@@ -101,7 +100,21 @@ export default function HomePage() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredFacilities.map((facility) => (
-              <FacilityCard key={facility._id} facility={facility} />
+              <div key={facility._id} className="bg-slate-900/30 border border-white/10 rounded-2xl overflow-hidden p-5 flex flex-col justify-between">
+                <div>
+                  <img src={facility.image || "https://images.unsplash.com/photo-1541252260730-0412e8e2108e?w=600"} className="h-48 w-full object-cover rounded-lg mb-4" />
+                  <h3 className="font-bold text-lg">{facility.title}</h3>
+                  <div className="flex items-center text-slate-400 text-sm mt-1">
+                    <MapPin className="h-4 w-4 mr-1" /> {facility.location}
+                  </div>
+                </div>
+                <Link 
+                  href={`/facilities/${facility._id}`}
+                  className="mt-6 w-full py-2 bg-emerald-500 text-slate-950 font-bold text-center rounded-xl hover:bg-emerald-400 transition"
+                >
+                  Book Now
+                </Link>
+              </div>
             ))}
           </div>
         )}
