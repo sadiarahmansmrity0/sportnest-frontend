@@ -1,36 +1,52 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# SportNest - Sports Facility Booking Platform (Frontend)
 
-## Getting Started
+## Project Name
+SportNest Frontend
 
-First, run the development server:
+## Purpose
+A modern web application that allows users to discover, book, and manage sports facilities like football grounds, cricket nets, badminton courts, and swimming pools.
+
+## Frontend Live URL
+https://sportnest-frontend-phi.vercel.app
+## backend Live URL
+https://sportnest-server-7bbz.onrender.com
+ ## backend repository URL
+ https://github.com/sadiarahmansmrity0/sportnest-server
+
+## Features
+- User Authentication (Email/Password + Google OAuth)
+- Browse and Search Facilities
+- Booking System for Time Slots
+- Filter by Sport Category
+- Sort by Price
+- Add New Facilities (for owners)
+- Edit and Delete Facilities
+- View Booking History
+- Cancel Bookings
+- Responsive Design (Desktop, Tablet, Mobile)
+- Dark Theme UI
+
+## NPM Packages Used
+
+| Package | Purpose |
+|---------|---------|
+| next | React framework |
+| react | UI library |
+| react-dom | DOM rendering |
+| tailwindcss | CSS styling |
+| lucide-react | Icons |
+| @react-oauth/google | Google login |
+
+## Installation
 
 ```bash
+git clone https://github.com/yourusername/sportnest-frontend.git
+cd sportnest-frontend
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Environment Setup
+Create src/lib/api.js:
+export const API_URL = 'https://your-backend-url.onrender.com';
+export const NEXT_PUBLIC_GOOGLE_CLIENT_ID = 'your_google_client_id';
+Author
+Sadia Rahman Smrity
