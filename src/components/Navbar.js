@@ -2,18 +2,35 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { Menu, X, Trophy } from 'lucide-react';
+import { usePathname, useRouter } from 'next/navigation';
+import { Trophy, Menu, X } from 'lucide-react';
 import ProfileDropdown from './ProfileDropdown';
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
 
-  useEffect(() => {
+  // Check login status
+  const checkLoginStatus = () => {
     const email = localStorage.getItem('userEmail');
     setIsLoggedIn(!!email);
+  };
+
+  useEffect(() => {
+    checkLoginStatus();
+
+    // Listen for storage changes (when logout happens in another tab)
+    window.addEventListener('storage', checkLoginStatus);
+    
+    // Custom event for logout within the same tab
+    window.addEventListener('authChange', checkLoginStatus);
+    
+    return () => {
+      window.removeEventListener('storage', checkLoginStatus);
+      window.removeEventListener('authChange', checkLoginStatus);
+    };
   }, []);
 
   const navLinks = [
@@ -54,7 +71,7 @@ export default function Navbar() {
                 {link.label}
               </Link>
             ))}
-            <ProfileDropdown />
+            <ProfileDropdown onLogout={checkLoginStatus} />
           </div>
 
           {/* Mobile menu button */}
@@ -86,7 +103,7 @@ export default function Navbar() {
               </Link>
             ))}
             <div className="pt-2 border-t border-white/10">
-              <ProfileDropdown />
+              <ProfileDropdown onLogout={checkLoginStatus} />
             </div>
           </div>
         </div>

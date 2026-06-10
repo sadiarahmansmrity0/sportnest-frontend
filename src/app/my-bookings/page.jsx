@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { API_URL } from '@/lib/api';
 import { Calendar, Clock, MapPin, XCircle } from 'lucide-react';
+import AuthGuard from '@/components/AuthGuard';
 
 export default function MyBookingsPage() {
   const router = useRouter();
@@ -46,7 +47,6 @@ export default function MyBookingsPage() {
       
       if (data.success) {
         alert('Booking cancelled successfully!');
-        // Refresh the bookings list
         const userEmail = localStorage.getItem('userEmail');
         fetchBookings(userEmail);
       } else {
@@ -83,7 +83,7 @@ export default function MyBookingsPage() {
     );
   }
 
-  return (
+  const content = (
     <div className="min-h-screen bg-[#020617] text-white pt-28 pb-20 px-6">
       <div className="max-w-4xl mx-auto">
         <h1 className="text-3xl font-bold mb-2">My Bookings</h1>
@@ -108,7 +108,6 @@ export default function MyBookingsPage() {
                 className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 hover:border-emerald-500/30 transition-all"
               >
                 <div className="flex flex-wrap md:flex-nowrap justify-between items-start gap-4">
-                  {/* Left side - Booking Details */}
                   <div className="flex-1">
                     <h3 className="text-xl font-bold text-emerald-400 mb-2">
                       {booking.facilityTitle || 'Sports Facility'}
@@ -136,7 +135,6 @@ export default function MyBookingsPage() {
                     </div>
                   </div>
 
-                  {/* Right side - Cancel Button */}
                   <button
                     onClick={() => cancelBooking(booking._id)}
                     disabled={cancelling === booking._id}
@@ -153,4 +151,6 @@ export default function MyBookingsPage() {
       </div>
     </div>
   );
+
+  return <AuthGuard>{content}</AuthGuard>;
 }

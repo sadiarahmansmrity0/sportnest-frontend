@@ -3,9 +3,10 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { API_URL } from '@/lib/api';
-import { Pencil, Trash2, MapPin, DollarSign, Users, Edit, Eye } from 'lucide-react';
+import { Pencil, Trash2, MapPin, DollarSign, Edit } from 'lucide-react';
+import AuthGuard from '@/components/AuthGuard';
 
-export default function ManageFacilitiesPage() {
+function ManageFacilitiesContent() {
   const router = useRouter();
   const [facilities, setFacilities] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -67,7 +68,6 @@ export default function ManageFacilitiesPage() {
       
       if (data.success) {
         alert('Facility deleted successfully!');
-        // Refresh the list
         const userEmail = localStorage.getItem('userEmail');
         fetchFacilities(userEmail);
       } else {
@@ -112,7 +112,6 @@ export default function ManageFacilitiesPage() {
       if (data.success) {
         alert('Facility updated successfully!');
         setShowEditModal(false);
-        // Refresh the list
         const userEmail = localStorage.getItem('userEmail');
         fetchFacilities(userEmail);
       } else {
@@ -327,5 +326,13 @@ export default function ManageFacilitiesPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function ManageFacilitiesPage() {
+  return (
+    <AuthGuard>
+      <ManageFacilitiesContent />
+    </AuthGuard>
   );
 }

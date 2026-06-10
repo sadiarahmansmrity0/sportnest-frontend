@@ -3,8 +3,9 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { API_URL } from '@/lib/api';
+import AuthGuard from '@/components/AuthGuard';
 
-export default function AddFacilityPage() {
+function AddFacilityContent() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -53,7 +54,6 @@ export default function AddFacilityPage() {
   };
 
   return (
-    // ADD THIS DARK BACKGROUND DIV
     <div className="min-h-screen bg-[#020617] text-white pt-24 pb-20 px-6">
       <div className="max-w-3xl mx-auto">
         
@@ -105,10 +105,10 @@ export default function AddFacilityPage() {
               </select>
             </div>
 
-            {/* Image URL */}
+            {/* Image URL - Optional */}
             <div>
               <label className="block text-sm font-semibold text-slate-300 mb-2">
-                Image URL
+                Image URL <span className="text-slate-500 font-normal">(optional)</span>
               </label>
               <input
                 type="url"
@@ -156,7 +156,7 @@ export default function AddFacilityPage() {
 
               <div>
                 <label className="block text-sm font-semibold text-slate-300 mb-2">
-                  Capacity
+                  Capacity <span className="text-slate-500 font-normal">(optional)</span>
                 </label>
                 <input
                   type="text"
@@ -172,7 +172,7 @@ export default function AddFacilityPage() {
             {/* Description */}
             <div>
               <label className="block text-sm font-semibold text-slate-300 mb-2">
-                Description
+                Description <span className="text-slate-500 font-normal">(optional)</span>
               </label>
               <textarea
                 name="description"
@@ -196,5 +196,13 @@ export default function AddFacilityPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function AddFacilityPage() {
+  return (
+    <AuthGuard>
+      <AddFacilityContent />
+    </AuthGuard>
   );
 }

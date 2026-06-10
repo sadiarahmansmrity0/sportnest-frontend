@@ -3,17 +3,34 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { User, Calendar, PlusCircle, Settings, LogOut, ChevronDown } from 'lucide-react';
+import { Calendar, PlusCircle, Settings, LogOut, ChevronDown } from 'lucide-react';
 
-export default function ProfileDropdown() {
+export default function ProfileDropdown({ onLogout }) {
   const [isOpen, setIsOpen] = useState(false);
   const [userEmail, setUserEmail] = useState(null);
   const dropdownRef = useRef(null);
   const router = useRouter();
 
-  useEffect(() => {
+  // Function to check login status
+  const checkLoginStatus = () => {
     const email = localStorage.getItem('userEmail');
     setUserEmail(email);
+  };
+
+  useEffect(() => {
+    // Check initially
+    checkLoginStatus();
+
+    // Listen for storage changes (when logout happens)
+    window.addEventListener('storage', checkLoginStatus);
+    
+    // Listen for custom auth change event
+    window.addEventListener('authChange', checkLoginStatus);
+    
+    return () => {
+      window.removeEventListener('storage', checkLoginStatus);
+      window.removeEventListener('authChange', checkLoginStatus);
+    };
   }, []);
 
   useEffect(() => {
@@ -28,9 +45,16 @@ export default function ProfileDropdown() {
 
   const handleLogout = () => {
     localStorage.removeItem('userEmail');
+    // Update state immediately
+    setUserEmail(null);
+    // Dispatch event to notify navbar
+    window.dispatchEvent(new Event('authChange'));
+    if (onLogout) onLogout();
     router.push('/login');
+    setIsOpen(false);
   };
 
+  // If not logged in, show Sign In button
   if (!userEmail) {
     return (
       <Link
@@ -42,7 +66,6 @@ export default function ProfileDropdown() {
     );
   }
 
-  // Get first letter for avatar
   const avatarLetter = userEmail.charAt(0).toUpperCase();
 
   return (
@@ -96,7 +119,6 @@ export default function ProfileDropdown() {
             </Link>
           </div>
 
-          {/* Divider */}
           <div className="border-t border-white/10"></div>
 
           {/* Logout */}
