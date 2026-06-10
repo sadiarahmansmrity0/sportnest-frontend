@@ -3,69 +3,66 @@ import { API_URL } from "@/lib/api";
 import { useState } from "react";
 import Link from "next/link"; 
 import { useRouter } from "next/navigation";
-import { toast } from "react-toastify";
-import { Trophy, Eye, EyeOff, Mail, Lock, User, Image } from "lucide-react";
+import { Trophy, Eye, EyeOff, Mail, Lock, Image } from "lucide-react";
 
 export default function RegisterPage() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
   
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    photoUrl: "",
-    password: "",
-  });
-
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [photoUrl, setPhotoUrl] = useState("");
 
   const handleRegister = async (e) => {
     e.preventDefault();
-    const { name, email, photoUrl, password } = formData;
-
-    // Password Validation Rules
+    setErrorMsg("");
+    
+    if (!email || !password) {
+      setErrorMsg("Email and password are required.");
+      return;
+    }
+    
     if (password.length < 6) {
-      toast.error("Password must be at least 6 characters long.");
+      setErrorMsg("Password must be at least 6 characters long.");
       return;
     }
     if (!/[A-Z]/.test(password)) {
-      toast.error("Password must contain at least one uppercase letter.");
+      setErrorMsg("Password must contain at least one uppercase letter.");
       return;
     }
     if (!/[a-z]/.test(password)) {
-      toast.error("Password must contain at least one lowercase letter.");
+      setErrorMsg("Password must contain at least one lowercase letter.");
+      return;
+    }
+    if (password !== confirmPassword) {
+      setErrorMsg("Passwords do not match.");
       return;
     }
 
     setLoading(true);
     try {
-      // FIXED: Swapped out double quotes for backticks to resolve the string template literal
       const response = await fetch(`${API_URL}/api/auth/register`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ name, email, photoUrl, password }),
+        body: JSON.stringify({ email, password }),
       });
 
       const data = await response.json();
 
-      if (data.success || response.ok) {
+      if (data.success) {
         localStorage.setItem("userEmail", email);
-        toast.success("Registration successful! Forwarding to account portal...");
-        
-        setTimeout(() => {
-          router.push("/dashboard");
-        }, 1500);
+        window.location.href = "/dashboard";
       } else {
-        toast.error(data.message || "Registration refused by backend database secure channels.");
+        setErrorMsg(data.message || "Registration failed. User may already exist.");
       }
     } catch (error) {
       console.error(error);
-      toast.error("Server connection failed. Is your Node backend active?");
+      setErrorMsg("Server connection failed. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -84,25 +81,13 @@ export default function RegisterPage() {
           <p className="mt-1 text-sm text-slate-400">Join our sports community today</p>
         </div>
 
-        <form className="mt-8 space-y-5" onSubmit={handleRegister}>
-          <div>
-            <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">Full Name</label>
-            <div className="relative">
-              <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-500">
-                <User className="h-4 w-4" />
-              </span>
-              <input
-                type="text"
-                name="name"
-                required
-                value={formData.name}
-                onChange={handleChange}
-                placeholder="John Doe"
-                className="w-full bg-slate-950 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-sm text-white focus:outline-none focus:border-emerald-500 transition-colors"
-              />
-            </div>
+        {errorMsg && (
+          <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-center text-sm text-red-400">
+            {errorMsg}
           </div>
+        )}
 
+        <form className="mt-8 space-y-5" onSubmit={handleRegister}>
           <div>
             <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">Email Address</label>
             <div className="relative">
@@ -111,31 +96,33 @@ export default function RegisterPage() {
               </span>
               <input
                 type="email"
-                name="email"
                 required
-                value={formData.email}
-                onChange={handleChange}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
                 className="w-full bg-slate-950 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-sm text-white focus:outline-none focus:border-emerald-500 transition-colors"
               />
             </div>
           </div>
 
+          {/* OPTIONAL PHOTO URL - Type="text" so it doesn't require URL format */}
           <div>
-            <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">Photo URL</label>
+            <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">
+              Photo URL <span className="text-slate-500 font-normal">(optional)</span>
+            </label>
             <div className="relative">
               <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-500">
                 <Image className="h-4 w-4" />
               </span>
-             <input
-  type="url"
-  name="photoUrl"
-  value={formData.photoUrl}
-  onChange={handleChange}
-  placeholder="https://images.com/avatar.jpg (optional)"
-  className="w-full bg-slate-950 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-sm text-white focus:outline-none focus:border-emerald-500 transition-colors"
-/>
+              <input
+                type="text"
+                value={photoUrl}
+                onChange={(e) => setPhotoUrl(e.target.value)}
+                placeholder="https://images.com/avatar.jpg (leave empty for default)"
+                className="w-full bg-slate-950 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-sm text-white focus:outline-none focus:border-emerald-500 transition-colors"
+              />
             </div>
+            <p className="text-xs text-slate-500 mt-1">Optional - you can leave this empty</p>
           </div>
 
           <div>
@@ -146,10 +133,9 @@ export default function RegisterPage() {
               </span>
               <input
                 type={showPassword ? "text" : "password"}
-                name="password"
                 required
-                value={formData.password}
-                onChange={handleChange}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 className="w-full bg-slate-950 border border-white/10 rounded-xl pl-10 pr-10 py-3 text-sm text-white focus:outline-none focus:border-emerald-500 transition-colors"
               />
@@ -160,6 +146,23 @@ export default function RegisterPage() {
               >
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">Confirm Password</label>
+            <div className="relative">
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-500">
+                <Lock className="h-4 w-4" />
+              </span>
+              <input
+                type={showPassword ? "text" : "password"}
+                required
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="••••••••"
+                className="w-full bg-slate-950 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-sm text-white focus:outline-none focus:border-emerald-500 transition-colors"
+              />
             </div>
           </div>
 
